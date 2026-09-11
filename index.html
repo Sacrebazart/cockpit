@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F1F3F6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Cockpit</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23B85C1E'/%3E%3Ccircle cx='32' cy='32' r='9' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root{
+  --bg:#F1F3F6; --surface:#FFFFFF; --surface2:#E7EAF0; --line:#D6DBE4;
+  --ink:#171C26; --ink2:#4A5364; --ink3:#7C8494;
+  --accent:#B85C1E; --accent-ink:#FFFFFF; --accent-soft:#F6E3D4;
+  --now:#B85C1E; --next:#2F6F8F; --parked:#7C8494; --life:#3E7A4D; --routine:#6A4FA3;
+  --danger:#B3261E; --ok:#2E7D4F;
+  --radius:14px; --shadow:0 1px 2px rgba(23,28,38,.06),0 6px 20px rgba(23,28,38,.06);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#111419; --surface:#1A1F27; --surface2:#232935; --line:#2E3543;
+    --ink:#EDF0F5; --ink2:#B4BBC8; --ink3:#7E8797;
+    --accent:#E08A4A; --accent-ink:#1A1208; --accent-soft:#3A2818;
+    --now:#E08A4A; --next:#6FB0D3; --parked:#8A93A3; --life:#7DC48E; --routine:#B39BE6;
+    --danger:#F28B82; --ok:#7DC48E;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111419; --surface:#1A1F27; --surface2:#232935; --line:#2E3543;
+  --ink:#EDF0F5; --ink2:#B4BBC8; --ink3:#7E8797;
+  --accent:#E08A4A; --accent-ink:#1A1208; --accent-soft:#3A2818;
+  --now:#E08A4A; --next:#6FB0D3; --parked:#8A93A3; --life:#7DC48E; --routine:#B39BE6;
+  --danger:#F28B82; --ok:#7DC48E;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:84px}
+h1,h2,h3{font-family:"Sora","IBM Plex Sans",system-ui,sans-serif;margin:0;text-wrap:balance;letter-spacing:-.01em}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:16px 16px 0}
+
+/* header */
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:8px 0 14px}
+.top h1{font-size:22px;font-weight:700}
+.top .date{color:var(--ink3);font-size:13px}
+.sync{font-size:12px;color:var(--ink3);display:flex;align-items:center;gap:6px}
+.sync::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ink3)}
+.sync.on::before{background:var(--ok)}
+.sync.off::before{background:var(--danger)}
+
+/* capture */
+.capture{display:flex;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:8px 8px 8px 14px;box-shadow:var(--shadow);margin-bottom:18px}
+.capture input{flex:1;border:0;background:none;font-size:16px;min-width:0}
+.capture input::placeholder{color:var(--ink3)}
+.capture button{background:var(--accent);color:var(--accent-ink);font-weight:600;border-radius:10px;padding:8px 14px;font-size:14px}
+
+/* sections */
+.section{margin-bottom:26px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.sec-head h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink2)}
+.sec-head .count{font-size:12px;color:var(--ink3);font-variant-numeric:tabular-nums}
+.empty{color:var(--ink3);font-size:14px;padding:12px 2px;font-style:italic}
+
+/* list rows */
+.list{display:flex;flex-direction:column;gap:6px}
+.row{display:flex;align-items:flex-start;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.row.done{opacity:.55}
+.row.done .t{text-decoration:line-through}
+.chk{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--line);margin-top:2px;display:grid;place-items:center;background:var(--surface)}
+.chk.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.chk svg{width:12px;height:12px;display:none}
+.chk.on svg{display:block}
+.row .body{flex:1;min-width:0}
+.row .t{font-weight:500;overflow-wrap:anywhere}
+.row .m{font-size:12.5px;color:var(--ink3);display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:2px}
+.row .m .late{color:var(--danger);font-weight:600}
+.row .m .today{color:var(--accent);font-weight:600}
+.tag{display:inline-block;font-size:11.5px;padding:1px 8px;border-radius:999px;background:var(--surface2);color:var(--ink2);font-weight:500}
+.tag.now{background:var(--accent-soft);color:var(--now)}
+.tag.next{color:var(--next)}
+.tag.routine{color:var(--routine)}
+.tag.life{color:var(--life)}
+.more{flex:none;color:var(--ink3);width:30px;height:30px;border-radius:8px;display:grid;place-items:center;margin:-4px -6px 0 0}
+.more:hover{background:var(--surface2);color:var(--ink)}
+
+/* projects */
+.lane{margin-bottom:22px}
+.lane-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.lane-head .dot{width:10px;height:10px;border-radius:50%}
+.lane-head h2{font-size:15px;font-weight:600}
+.lane-head .hint{font-size:12.5px;color:var(--ink3);margin-left:auto;text-align:right}
+.lane-head .hint.over{color:var(--danger);font-weight:600}
+.proj{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:6px;border-left-width:4px}
+.proj.now{border-left-color:var(--now)} .proj.next{border-left-color:var(--next)} .proj.parked{border-left-color:var(--parked);opacity:.85}
+.proj .n{font-family:"Sora",sans-serif;font-weight:600;font-size:16px;display:flex;align-items:center;gap:8px}
+.proj .n span{flex:1}
+.proj .why{color:var(--ink2);font-size:14px}
+.proj .step{font-size:14px;display:flex;gap:8px;align-items:baseline}
+.proj .step b{font-weight:600;color:var(--ink3);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;flex:none}
+.proj .step i{font-style:normal;color:var(--ink)}
+.proj .step i.none{color:var(--ink3);font-style:italic}
+.proj .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.pill{font-size:12.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);font-weight:500}
+.pill:hover{background:var(--surface2);color:var(--ink)}
+.pill.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+/* nav */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:5}
+nav.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--ink3);font-size:11px;font-weight:500;padding:4px 0;border-radius:10px;position:relative}
+nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button.on{color:var(--accent)}
+nav.tabs .badge{position:absolute;top:0;right:calc(50% - 22px);min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--accent);color:var(--accent-ink);font-size:10px;font-weight:700;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.view{display:none}.view.on{display:block}
+
+/* sheet (editor) */
+.sheet-bg{position:fixed;inset:0;background:rgba(10,13,18,.45);z-index:20;display:none;align-items:flex-end;justify-content:center}
+.sheet-bg.on{display:flex}
+.sheet{background:var(--surface);width:100%;max-width:720px;border-radius:18px 18px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.sheet h3{font-size:17px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
+.field input,.field textarea,.field select{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:15px;width:100%}
+.field textarea{min-height:70px;resize:vertical}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{padding:7px 12px;border-radius:999px;border:1px solid var(--line);font-size:13.5px;font-weight:500;color:var(--ink2);background:var(--surface)}
+.seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.sheet .btns{display:flex;gap:8px;justify-content:space-between;margin-top:6px}
+.btn{padding:10px 16px;border-radius:10px;font-weight:600;font-size:14.5px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--danger)}
+.quick-dates{display:flex;gap:6px;flex-wrap:wrap}
+
+/* review */
+.review-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+.review-card h3{font-size:16px;margin-bottom:6px}
+.review-card p{margin:0 0 10px;color:var(--ink2);font-size:14px}
+.review-card ol{margin:0;padding-left:20px;color:var(--ink2);font-size:14px}
+.review-card li{margin:4px 0}
+.triage{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:10px}
+.triage .t{font-size:17px;font-weight:600;font-family:"Sora",sans-serif}
+.triage .acts{display:flex;gap:6px;flex-wrap:wrap}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font-family:"Sora",sans-serif;font-size:22px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--ink3)}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:13.5px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* auth / settings */
+.gate{max-width:420px;margin:8vh auto 0;padding:0 20px;display:none;flex-direction:column;gap:16px}
+.gate.on{display:flex}
+.gate h1{font-size:26px}
+.gate p{color:var(--ink2);margin:0;font-size:14.5px}
+.gate form{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
+.gate .err{color:var(--danger);font-size:13.5px;min-height:1.2em}
+.gate .link{color:var(--ink3);font-size:13px;text-decoration:underline;align-self:center}
+.app{display:none}.app.on{display:block}
+.sync button{color:var(--ink3);font-size:12px;text-decoration:underline}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate-config">
+  <h1>Cockpit</h1>
+  <p>Première ouverture sur cet appareil. Colle ici l'adresse et la clé publique « anon » de ton projet Supabase (Settings → API). Elles restent sur cet appareil.</p>
+  <form id="cfgForm">
+    <div class="field"><label>URL du projet</label><input id="cfgUrl" placeholder="https://xxxx.supabase.co" autocomplete="off" required></div>
+    <div class="field"><label>Clé anon (publique)</label><textarea id="cfgKey" placeholder="eyJ…" required style="min-height:90px"></textarea></div>
+    <div class="err" id="cfgErr"></div>
+    <button class="btn primary" type="submit">Continuer</button>
+  </form>
+</div>
+
+<div class="gate" id="gate-login">
+  <h1>Cockpit</h1>
+  <p>Ton espace perso. Connecte-toi avec ton email et ton mot de passe.</p>
+  <form id="loginForm">
+    <div class="field"><label>Email</label><input id="lgEmail" type="email" autocomplete="email" required></div>
+    <div class="field"><label>Mot de passe</label><input id="lgPass" type="password" autocomplete="current-password" required minlength="8"></div>
+    <div class="err" id="lgErr"></div>
+    <button class="btn primary" type="submit" id="lgBtn">Se connecter</button>
+    <button class="btn" type="button" id="lgSignup">Créer mon compte</button>
+    <button class="link" type="button" id="lgReset">Changer de projet Supabase</button>
+  </form>
+</div>
+
+<div class="app" id="app">
+<div class="wrap">
+  <div class="top">
+    <div><h1 id="title">Aujourd'hui</h1><div class="date" id="date"></div></div>
+    <div class="sync" id="sync">connexion…</div>
+  </div>
+
+  <form class="capture" id="capture">
+    <input id="capInput" placeholder="Une idée, une tâche, un truc à ne pas oublier…" autocomplete="off">
+    <button type="submit">Noter</button>
+  </form>
+
+  <section class="view on" id="v-today"></section>
+  <section class="view" id="v-inbox"></section>
+  <section class="view" id="v-projects"></section>
+  <section class="view" id="v-life"></section>
+  <section class="view" id="v-review"></section>
+</div>
+
+<nav class="tabs" id="tabs">
+  <button data-v="today" class="on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Aujourd'hui</button>
+  <button data-v="inbox"><svg viewBox="0 0 24 24"><path d="M3 13l2.5-8h13L21 13v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 13h5l1.5 3h5L16 13h5"/></svg>Boîte<span class="badge" id="inboxBadge" hidden></span></button>
+  <button data-v="projects"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>Projets</button>
+  <button data-v="life"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Vie</button>
+  <button data-v="review"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>Revue</button>
+</nav>
+
+</div>
+
+<div class="sheet-bg" id="sheetBg"><div class="sheet" id="sheet" role="dialog"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+/* ---------- state & persistence ----------
+   Local copy of everything in localStorage (works offline, opens instantly).
+   Truth lives in Supabase, table `entries` (one row per object), protected by
+   row-level security so only the logged-in user sees their rows.
+   Pending writes are queued and flushed when the network is back. */
+const S = { projects: {}, items: {}, routines: {}, meta: {} };
+const LS = 'cockpit-cache-v2', LSQ = 'cockpit-queue-v1', LSC = 'cockpit-config-v1';
+try { const c = JSON.parse(localStorage.getItem(LS)); if (c) Object.assign(S, c); } catch (e) {}
+let queue = []; try { queue = JSON.parse(localStorage.getItem(LSQ)) || []; } catch(e){}
+function cache(){ try { localStorage.setItem(LS, JSON.stringify(S)); localStorage.setItem(LSQ, JSON.stringify(queue)); } catch(e){} }
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const now = () => new Date().toISOString();
+function stripId(o){ const c = { ...o }; delete c.id; return c; }
+
+let sb = null, user = null, flushing = false;
+
+async function save(col, id, data){
+  S[col][id] = { ...(S[col][id]||{}), ...data, id, updatedAt: now() };
+  queue.push({ op: 'set', col, id, data: stripId(S[col][id]), at: S[col][id].updatedAt });
+  cache(); render(); flush();
+}
+async function remove(col, id){
+  delete S[col][id];
+  queue.push({ op: 'del', col, id });
+  cache(); render(); flush();
+}
+
+function setSync(state, label){
+  const el = document.getElementById('sync');
+  el.className = 'sync ' + state;
+  el.innerHTML = esc(label) + (user ? ' · <button id="logout">quitter</button>' : '');
+}
+
+async function flush(){
+  if (!sb || !user || flushing || !queue.length) return;
+  flushing = true;
+  try {
+    while (queue.length) {
+      const q = queue[0];
+      if (q.op === 'set') {
+        const { error } = await sb.from('entries').upsert({ id: q.id, user_id: user.id, col: q.col, data: q.data, updated_at: q.at });
+        if (error) throw error;
+      } else {
+        const { error } = await sb.from('entries').delete().eq('id', q.id);
+        if (error) throw error;
+      }
+      queue.shift(); cache();
+    }
+    setSync('on', 'synchronisé');
+  } catch (e) {
+    setSync('off', 'en attente de réseau');
+  } finally { flushing = false; }
+}
+
+async function pull(){
+  if (!sb || !user) return;
+  const { data, error } = await sb.from('entries').select('id,col,data,updated_at');
+  if (error) { setSync('off', 'lecture impossible'); return; }
+  const pendingIds = new Set(queue.map(q => q.id));
+  const next = { projects: {}, items: {}, routines: {}, meta: {} };
+  // keep local unsynced versions on top of what the server has
+  for (const col in next) for (const id in S[col]) if (pendingIds.has(id)) next[col][id] = S[col][id];
+  data.forEach(r => { if (next[r.col] && !pendingIds.has(r.id)) next[r.col][r.id] = { ...r.data, id: r.id }; });
+  Object.assign(S, next); cache(); render();
+  setSync(queue.length ? 'off' : 'on', queue.length ? 'en attente de réseau' : 'synchronisé');
+}
+
+/* ---------- boot: config → login → app ---------- */
+const $ = id => document.getElementById(id);
+function show(which){
+  $('gate-config').classList.toggle('on', which === 'config');
+  $('gate-login').classList.toggle('on', which === 'login');
+  $('app').classList.toggle('on', which === 'app');
+}
+function getConfig(){ try { return JSON.parse(localStorage.getItem(LSC)); } catch(e){ return null; } }
+
+$('cfgForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const url = $('cfgUrl').value.trim().replace(/\/$/, ''), key = $('cfgKey').value.trim();
+  if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url)) { $('cfgErr').textContent = "L'URL doit ressembler à https://xxxx.supabase.co"; return; }
+  if (key.length < 40) { $('cfgErr').textContent = 'Cette clé semble trop courte.'; return; }
+  localStorage.setItem(LSC, JSON.stringify({ url, key }));
+  boot();
+});
+$('lgReset').addEventListener('click', () => { localStorage.removeItem(LSC); show('config'); });
+
+async function boot(){
+  const cfg = getConfig();
+  if (!cfg) { show('config'); return; }
+  sb = supabase.createClient(cfg.url, cfg.key);
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) { enter(session.user); } else { show('login'); }
+  sb.auth.onAuthStateChange((ev, s) => {
+    if (ev === 'SIGNED_OUT') { user = null; show('login'); }
+    else if (s?.user && !user) enter(s.user);
+  });
+}
+
+async function enter(u){
+  user = u; show('app'); render();
+  setSync('', 'connexion…');
+  await flush(); await pull();
+  sb.channel('entries-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'entries', filter: 'user_id=eq.' + u.id }, () => pull())
+    .subscribe();
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { flush(); pull(); } });
+  window.addEventListener('online', () => { flush(); pull(); });
+}
+
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault(); $('lgErr').textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email: $('lgEmail').value.trim(), password: $('lgPass').value });
+  if (error) $('lgErr').textContent = 'Connexion refusée : ' + error.message;
+});
+$('lgSignup').addEventListener('click', async () => {
+  $('lgErr').textContent = '';
+  const email = $('lgEmail').value.trim(), password = $('lgPass').value;
+  if (!email || password.length < 8) { $('lgErr').textContent = 'Email + mot de passe de 8 caractères minimum.'; return; }
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if (error) { $('lgErr').textContent = error.message; return; }
+  if (data.session) return; // auto-confirm enabled
+  $('lgErr').style.color = 'var(--ok)'; $('lgErr').textContent = 'Compte créé. Vérifie ta boîte mail pour confirmer, puis connecte-toi.';
+});
+document.body.addEventListener('click', e => {
+  if (e.target.id === 'logout' && confirm('Se déconnecter sur cet appareil ? Les données restent sur Supabase.')) {
+    sb.auth.signOut(); localStorage.removeItem(LS); localStorage.removeItem(LSQ);
+    for (const c in S) S[c] = {}; queue = [];
+  }
+});
+
+boot();
+
+/* ---------- helpers ---------- */
+const DAYS = ['dim','lun','mar','mer','jeu','ven','sam'];
+const MONTHS = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+function isoDay(d = new Date()){ const z = new Date(d.getTime() - d.getTimezoneOffset()*60000); return z.toISOString().slice(0,10); }
+const TODAY = isoDay();
+function addDays(n){ const d = new Date(); d.setDate(d.getDate()+n); return isoDay(d); }
+function fmtDate(iso){ if(!iso) return ''; const [y,m,d] = iso.split('-').map(Number); const dt = new Date(y,m-1,d); return DAYS[dt.getDay()] + ' ' + d + ' ' + MONTHS[m-1]; }
+function dueLabel(iso){
+  if (!iso) return '';
+  if (iso < TODAY) return `<span class="late">en retard · ${fmtDate(iso)}</span>`;
+  if (iso === TODAY) return `<span class="today">aujourd'hui</span>`;
+  if (iso === addDays(1)) return `demain`;
+  return fmtDate(iso);
+}
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const projName = id => S.projects[id]?.name || '';
+const byOrder = (a,b) => (a.order ?? 0) - (b.order ?? 0) || (a.createdAt||'').localeCompare(b.createdAt||'');
+const openTasks = () => Object.values(S.items).filter(i => i.kind === 'task' && !i.done);
+const inboxItems = () => Object.values(S.items).filter(i => i.kind === 'inbox').sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
+const ideas = () => Object.values(S.items).filter(i => i.kind === 'idea');
+const lane = l => Object.values(S.projects).filter(p => p.lane === l).sort(byOrder);
+function routineDueToday(r){ return (r.days || []).includes(new Date().getDay()) && r.lastDone !== TODAY; }
+
+let toastT; function toast(m){ const t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('on'), 2200); }
+
+/* ---------- capture ---------- */
+document.getElementById('capture').addEventListener('submit', e => {
+  e.preventDefault();
+  const inp = document.getElementById('capInput'); const t = inp.value.trim(); if (!t) return;
+  save('items', uid(), { kind: 'inbox', title: t, createdAt: now() });
+  inp.value = ''; toast('Noté. Tu tries plus tard.');
+});
+
+/* ---------- navigation ---------- */
+let view = 'today';
+const TITLES = { today:"Aujourd'hui", inbox:'Boîte de réception', projects:'Projets', life:'Vie quotidienne', review:'Revue de la semaine' };
+document.getElementById('tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  view = b.dataset.v; render();
+});
+
+/* ---------- rendering ---------- */
+function render(){
+  document.getElementById('date').textContent = fmtDate(TODAY) + ' ' + new Date().getFullYear();
+  document.getElementById('title').textContent = TITLES[view];
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + view));
+  const nb = inboxItems().length; const badge = document.getElementById('inboxBadge'); badge.hidden = !nb; badge.textContent = nb;
+  ({ today: renderToday, inbox: renderInbox, projects: renderProjects, life: renderLife, review: renderReview })[view]();
+}
+
+function taskRow(i){
+  const p = i.projectId ? `<span class="tag ${S.projects[i.projectId]?.lane||''}">${esc(projName(i.projectId))}</span>` : '';
+  return `<div class="row ${i.done?'done':''}">
+    <button class="chk ${i.done?'on':''}" data-act="toggle" data-id="${i.id}" aria-label="Terminé"><svg viewBox="0 0 12 12"><path d="M2 6.5 5 9l5-6" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <div class="body"><div class="t">${esc(i.title)}</div>
+    <div class="m">${dueLabel(i.due)}${p}${i.note?`<span>${esc(i.note)}</span>`:''}</div></div>
+    <button class="more" data-act="edit-item" data-id="${i.id}" aria-label="Modifier">···</button></div>`;
+}
+function routineRow(r){
+  const done = r.lastDone === TODAY;
+  return `<div class="row ${done?'done':''}">
+    <button class="chk ${done?'on':''}" data-act="routine-done" data-id="${r.id}" aria-label="Fait aujourd'hui"><svg viewBox="0 0 12 12"><path d="M2 6.5 5 9l5-6" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <div class="body"><div class="t">${esc(r.name)}</div><div class="m"><span class="tag routine">routine</span><span>${(r.days||[]).map(d=>DAYS[d]).join(' ')}</span></div></div>
+    <button class="more" data-act="edit-routine" data-id="${r.id}" aria-label="Modifier">···</button></div>`;
+}
+function section(title, rows, empty, count){
+  return `<div class="section"><div class="sec-head"><h2>${title}</h2><span class="count">${count ?? ''}</span></div>
+    ${rows.length ? `<div class="list">${rows.join('')}</div>` : `<div class="empty">${empty}</div>`}</div>`;
+}
+
+function renderToday(){
+  const late = openTasks().filter(i => i.due && i.due < TODAY).sort((a,b)=>a.due.localeCompare(b.due));
+  const today = openTasks().filter(i => i.due === TODAY);
+  const routines = Object.values(S.routines).filter(r => (r.days||[]).includes(new Date().getDay()));
+  const nowP = lane('now');
+  const soon = openTasks().filter(i => i.due && i.due > TODAY && i.due <= addDays(6)).sort((a,b)=>a.due.localeCompare(b.due));
+  let h = '';
+  if (late.length) h += section('En retard', late.map(taskRow), '', late.length);
+  h += section("À faire aujourd'hui", today.map(taskRow), "Rien de daté pour aujourd'hui.", today.length || '');
+  if (routines.length) h += section('Routines du jour', routines.map(routineRow), '', '');
+  h += `<div class="section"><div class="sec-head"><h2>Projets en cours</h2><span class="count">${nowP.length}/3</span></div>
+    ${nowP.length ? `<div class="list">${nowP.map(p => `<div class="row"><div class="body"><div class="t">${esc(p.name)}</div><div class="m">${p.next ? `<span>Prochain pas : ${esc(p.next)}</span>` : '<span class="late">pas de prochain pas défini</span>'}</div></div><button class="more" data-act="edit-project" data-id="${p.id}" aria-label="Modifier">···</button></div>`).join('')}</div>` : `<div class="empty">Aucun projet en cours. Va dans Projets pour en passer un en « Maintenant ».</div>`}</div>`;
+  if (soon.length) h += section('Cette semaine', soon.map(taskRow), '', soon.length);
+  document.getElementById('v-today').innerHTML = h;
+}
+
+function renderInbox(){
+  const items = inboxItems();
+  const h = items.length
+    ? `<p style="color:var(--ink2);font-size:14px;margin:0 0 12px">Chaque ligne doit finir quelque part : une tâche datée, une idée pour un projet, ou la corbeille.</p><div class="list">${items.map(i => `
+      <div class="triage"><div class="t">${esc(i.title)}</div><div class="acts">
+        <button class="pill primary" data-act="triage-task" data-id="${i.id}">Tâche</button>
+        <button class="pill" data-act="triage-idea" data-id="${i.id}">Idée / projet</button>
+        <button class="pill" data-act="triage-park" data-id="${i.id}">Parquer</button>
+        <button class="pill" data-act="delete-item" data-id="${i.id}">Jeter</button>
+      </div></div>`).join('')}</div>`
+    : `<div class="empty">Boîte vide. Tout est à sa place.</div>`;
+  document.getElementById('v-inbox').innerHTML = h;
+}
+
+function projCard(p){
+  const tasks = openTasks().filter(i => i.projectId === p.id).length;
+  const pIdeas = ideas().filter(i => i.projectId === p.id).length;
+  const moves = { now: ['next','parked'], next: ['now','parked'], parked: ['next','now'] }[p.lane] || [];
+  const L = { now:'Maintenant', next:'Ensuite', parked:'Parqué' };
+  return `<div class="proj ${p.lane}">
+    <div class="n"><span>${esc(p.name)}</span><button class="more" data-act="edit-project" data-id="${p.id}" aria-label="Modifier">···</button></div>
+    ${p.why ? `<div class="why">${esc(p.why)}</div>` : ''}
+    <div class="step"><b>Prochain pas</b><i class="${p.next?'':'none'}">${p.next ? esc(p.next) : 'à définir'}</i></div>
+    <div class="acts">
+      ${moves.map(m => `<button class="pill" data-act="move" data-id="${p.id}" data-lane="${m}">→ ${L[m]}</button>`).join('')}
+      <button class="pill" data-act="add-task-for" data-id="${p.id}">+ tâche</button>
+      <span class="pill" style="border-color:transparent;color:var(--ink3)">${tasks} tâche${tasks>1?'s':''} · ${pIdeas} idée${pIdeas>1?'s':''}</span>
+    </div></div>`;
+}
+function renderProjects(){
+  const nowP = lane('now'), nextP = lane('next'), parkedP = lane('parked');
+  const looseIdeas = ideas().filter(i => !i.projectId);
+  let h = `<div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn primary" data-act="new-project">+ Nouveau projet</button></div>`;
+  h += `<div class="lane"><div class="lane-head"><span class="dot" style="background:var(--now)"></span><h2>Maintenant</h2><span class="hint ${nowP.length>3?'over':''}">${nowP.length}/3 ${nowP.length>3?'· trop, choisis':'· les seuls où tu bosses'}</span></div><div class="list">${nowP.map(projCard).join('') || '<div class="empty">Rien en cours.</div>'}</div></div>`;
+  h += `<div class="lane"><div class="lane-head"><span class="dot" style="background:var(--next)"></span><h2>Ensuite</h2><span class="hint">prêts, attendent une place</span></div><div class="list">${nextP.map(projCard).join('') || '<div class="empty">Rien en attente.</div>'}</div></div>`;
+  h += `<div class="lane"><div class="lane-head"><span class="dot" style="background:var(--parked)"></span><h2>Parqué</h2><span class="hint">gardé sans culpabilité</span></div><div class="list">${parkedP.map(projCard).join('') || '<div class="empty">Rien de parqué.</div>'}</div></div>`;
+  h += `<div class="lane"><div class="lane-head"><span class="dot" style="background:var(--line)"></span><h2>Idées en vrac</h2><span class="hint">sans projet attaché</span></div>
+    ${looseIdeas.length ? `<div class="list">${looseIdeas.map(i => `<div class="row"><div class="body"><div class="t">${esc(i.title)}</div>${i.note?`<div class="m"><span>${esc(i.note)}</span></div>`:''}</div><button class="more" data-act="edit-item" data-id="${i.id}" aria-label="Modifier">···</button></div>`).join('')}</div>` : '<div class="empty">Aucune.</div>'}</div>`;
+  document.getElementById('v-projects').innerHTML = h;
+}
+
+function renderLife(){
+  const tasks = openTasks().sort((a,b) => (a.due||'9999').localeCompare(b.due||'9999'));
+  const dated = tasks.filter(t => t.due), undated = tasks.filter(t => !t.due);
+  const doneRecent = Object.values(S.items).filter(i => i.kind==='task' && i.done).sort((a,b)=>(b.doneAt||'').localeCompare(a.doneAt||'')).slice(0,8);
+  const routines = Object.values(S.routines).sort((a,b)=>a.name.localeCompare(b.name));
+  let h = `<div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px"><button class="btn" data-act="new-routine">+ Routine</button><button class="btn primary" data-act="new-task">+ Tâche</button></div>`;
+  h += section('Échéances', dated.map(taskRow), 'Aucune tâche datée.', dated.length || '');
+  h += section('Sans date', undated.map(taskRow), 'Rien.', undated.length || '');
+  h += section('Routines', routines.map(routineRow), 'Aucune routine. Exemples : course à pied, batch com, revue du dimanche.', '');
+  if (doneRecent.length) h += section('Terminé récemment', doneRecent.map(taskRow), '', '');
+  document.getElementById('v-life').innerHTML = h;
+}
+
+function renderReview(){
+  const last = S.meta.review?.last;
+  const inbox = inboxItems().length, nowP = lane('now'), late = openTasks().filter(i => i.due && i.due < TODAY).length;
+  const noStep = nowP.filter(p => !p.next);
+  let h = `<div class="stat"><div><b>${inbox}</b><span>dans la boîte</span></div><div><b>${late}</b><span>en retard</span></div><div><b>${nowP.length}<small style="font-size:14px;color:var(--ink3)">/3</small></b><span>en cours</span></div></div>`;
+  h += `<div class="review-card"><h3>Revue du dimanche · 15 minutes</h3>
+    <p>${last ? `Dernière revue : ${fmtDate(last)}.` : 'Jamais faite encore.'}</p>
+    <ol>
+      <li><b>Vider la boîte</b> ${inbox ? `· ${inbox} à trier` : '· déjà vide ✓'}</li>
+      <li><b>Les retards</b> ${late ? `· ${late} tâche(s) : reporter ou jeter, pas culpabiliser` : '· aucun ✓'}</li>
+      <li><b>Maintenant = 3 max</b> ${nowP.length > 3 ? '· trop : rétrograder en « Ensuite »' : '· ok ✓'}</li>
+      <li><b>Un prochain pas par projet en cours</b> ${noStep.length ? `· manque pour : ${noStep.map(p=>esc(p.name)).join(', ')}` : '· ok ✓'}</li>
+      <li><b>Regarder la semaine qui vient</b> · onglet Aujourd'hui, section « Cette semaine »</li>
+    </ol>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" data-act="review-done">Revue faite</button>${inbox?`<button class="btn" data-act="go-inbox">Trier la boîte</button>`:''}</div>
+  </div>`;
+  h += `<div class="review-card"><h3>Les règles du jeu</h3><ol>
+    <li>Tout passe par la boîte. Zéro tri au moment de noter.</li>
+    <li>Trois projets en cours, pas quatre. Les autres attendent, ils ne meurent pas.</li>
+    <li>Un projet sans prochain pas concret n'avance pas. Le pas doit tenir en une soirée.</li>
+    <li>Le filtre : est-ce que ça paie les vacances, ou est-ce que ça compte vraiment ?</li>
+    <li>On ne rattrape jamais. Une semaine ratée, on reprend, c'est tout.</li>
+  </ol></div>`;
+  document.getElementById('v-review').innerHTML = h;
+}
+
+/* ---------- actions ---------- */
+document.body.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const id = b.dataset.id, act = b.dataset.act;
+  const A = {
+    'toggle': () => { const i = S.items[id]; save('items', id, { done: !i.done, doneAt: !i.done ? now() : null }); },
+    'routine-done': () => { const r = S.routines[id]; save('routines', id, { lastDone: r.lastDone === TODAY ? null : TODAY }); },
+    'edit-item': () => itemSheet(S.items[id]),
+    'edit-routine': () => routineSheet(S.routines[id]),
+    'edit-project': () => projectSheet(S.projects[id]),
+    'new-project': () => projectSheet({ lane: 'next' }),
+    'new-task': () => itemSheet({ kind: 'task' }),
+    'new-routine': () => routineSheet({ days: [] }),
+    'add-task-for': () => itemSheet({ kind: 'task', projectId: id }),
+    'move': () => save('projects', id, { lane: b.dataset.lane, order: Date.now() }),
+    'triage-task': () => itemSheet({ ...S.items[id], kind: 'task' }),
+    'triage-idea': () => itemSheet({ ...S.items[id], kind: 'idea' }),
+    'triage-park': () => { save('items', id, { kind: 'idea', projectId: null, parked: true }); toast('Parqué dans les idées en vrac.'); },
+    'delete-item': () => remove('items', id),
+    'review-done': () => { save('meta', 'review', { last: TODAY }); toast('Bonne semaine.'); },
+    'go-inbox': () => { view = 'inbox'; render(); },
+  };
+  A[act]?.();
+});
+
+/* ---------- sheets ---------- */
+const sheetBg = document.getElementById('sheetBg'), sheet = document.getElementById('sheet');
+function openSheet(html){ sheet.innerHTML = html; sheetBg.classList.add('on'); sheet.querySelector('input,textarea')?.focus(); }
+function closeSheet(){ sheetBg.classList.remove('on'); }
+sheetBg.addEventListener('click', e => { if (e.target === sheetBg) closeSheet(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+
+function projectOptions(sel){
+  const all = [...lane('now'), ...lane('next'), ...lane('parked')];
+  return `<option value="">— aucun projet —</option>` + all.map(p => `<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join('');
+}
+
+function itemSheet(i){
+  const isNew = !i.id; const id = i.id || uid();
+  openSheet(`<h3>${isNew ? 'Nouvelle entrée' : 'Modifier'}</h3>
+    <div class="field"><label>Type</label><div class="seg" id="kindSeg">
+      <button data-k="task" class="${i.kind==='task'?'on':''}">Tâche</button>
+      <button data-k="idea" class="${i.kind==='idea'?'on':''}">Idée</button>
+      <button data-k="inbox" class="${i.kind==='inbox'?'on':''}">Boîte</button></div></div>
+    <div class="field"><label>Titre</label><input id="f-title" value="${esc(i.title||'')}"></div>
+    <div class="field" id="dueField"><label>Échéance</label><input id="f-due" type="date" value="${i.due||''}">
+      <div class="quick-dates" style="margin-top:6px">
+        <button class="pill" data-d="0">aujourd'hui</button><button class="pill" data-d="1">demain</button><button class="pill" data-d="7">dans 7 j</button><button class="pill" data-d="30">dans 30 j</button><button class="pill" data-d="">sans date</button></div></div>
+    <div class="field"><label>Projet</label><select id="f-proj">${projectOptions(i.projectId)}</select></div>
+    <div class="field"><label>Note</label><textarea id="f-note">${esc(i.note||'')}</textarea></div>
+    <div class="btns"><div>${isNew?'':'<button class="btn danger" id="f-del">Supprimer</button>'}</div><div style="display:flex;gap:8px"><button class="btn" id="f-cancel">Annuler</button><button class="btn primary" id="f-ok">Enregistrer</button></div></div>`);
+  let kind = i.kind || 'task';
+  const seg = sheet.querySelector('#kindSeg');
+  const syncKind = () => { seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.k === kind)); sheet.querySelector('#dueField').style.display = kind === 'task' ? '' : 'none'; };
+  syncKind();
+  seg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { kind = b.dataset.k; syncKind(); } });
+  sheet.querySelector('.quick-dates').addEventListener('click', e => { const b = e.target.closest('button'); if (b) sheet.querySelector('#f-due').value = b.dataset.d === '' ? '' : addDays(+b.dataset.d); });
+  sheet.querySelector('#f-cancel').onclick = closeSheet;
+  sheet.querySelector('#f-del')?.addEventListener('click', () => { remove('items', id); closeSheet(); });
+  sheet.querySelector('#f-ok').onclick = () => {
+    const title = sheet.querySelector('#f-title').value.trim(); if (!title) return;
+    save('items', id, { kind, title, due: kind === 'task' ? (sheet.querySelector('#f-due').value || null) : null,
+      projectId: sheet.querySelector('#f-proj').value || null, note: sheet.querySelector('#f-note').value.trim(),
+      createdAt: i.createdAt || now(), done: i.done || false, parked: false });
+    closeSheet();
+  };
+}
+
+function projectSheet(p){
+  const isNew = !p.id; const id = p.id || uid();
+  openSheet(`<h3>${isNew ? 'Nouveau projet' : 'Projet'}</h3>
+    <div class="field"><label>Nom</label><input id="f-name" value="${esc(p.name||'')}"></div>
+    <div class="field"><label>Où il en est</label><div class="seg" id="laneSeg">
+      <button data-l="now" class="${p.lane==='now'?'on':''}">Maintenant</button>
+      <button data-l="next" class="${p.lane==='next'?'on':''}">Ensuite</button>
+      <button data-l="parked" class="${p.lane==='parked'?'on':''}">Parqué</button></div></div>
+    <div class="field"><label>Pourquoi ça compte</label><input id="f-why" value="${esc(p.why||'')}" placeholder="paie les vacances ? engagement ? plaisir ?"></div>
+    <div class="field"><label>Prochain pas concret</label><input id="f-next" value="${esc(p.next||'')}" placeholder="doit tenir en une soirée"></div>
+    <div class="btns"><div>${isNew?'':'<button class="btn danger" id="f-del">Supprimer</button>'}</div><div style="display:flex;gap:8px"><button class="btn" id="f-cancel">Annuler</button><button class="btn primary" id="f-ok">Enregistrer</button></div></div>`);
+  let ln = p.lane || 'next';
+  const seg = sheet.querySelector('#laneSeg');
+  seg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { ln = b.dataset.l; seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.l === ln)); } });
+  sheet.querySelector('#f-cancel').onclick = closeSheet;
+  sheet.querySelector('#f-del')?.addEventListener('click', () => { if (confirm('Supprimer ce projet ? Ses tâches restent, sans projet.')) { remove('projects', id); closeSheet(); } });
+  sheet.querySelector('#f-ok').onclick = () => {
+    const name = sheet.querySelector('#f-name').value.trim(); if (!name) return;
+    save('projects', id, { name, lane: ln, why: sheet.querySelector('#f-why').value.trim(), next: sheet.querySelector('#f-next').value.trim(), order: p.order ?? Date.now(), createdAt: p.createdAt || now() });
+    closeSheet();
+  };
+}
+
+function routineSheet(r){
+  const isNew = !r.id; const id = r.id || uid();
+  const order = [1,2,3,4,5,6,0];
+  openSheet(`<h3>${isNew ? 'Nouvelle routine' : 'Routine'}</h3>
+    <div class="field"><label>Nom</label><input id="f-name" value="${esc(r.name||'')}" placeholder="ex. Courir, Revue du dimanche"></div>
+    <div class="field"><label>Jours</label><div class="seg" id="daySeg">${order.map(d => `<button data-d="${d}" class="${(r.days||[]).includes(d)?'on':''}">${DAYS[d]}</button>`).join('')}</div></div>
+    <div class="btns"><div>${isNew?'':'<button class="btn danger" id="f-del">Supprimer</button>'}</div><div style="display:flex;gap:8px"><button class="btn" id="f-cancel">Annuler</button><button class="btn primary" id="f-ok">Enregistrer</button></div></div>`);
+  const days = new Set(r.days || []);
+  sheet.querySelector('#daySeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const d = +b.dataset.d; days.has(d) ? days.delete(d) : days.add(d); b.classList.toggle('on', days.has(d)); });
+  sheet.querySelector('#f-cancel').onclick = closeSheet;
+  sheet.querySelector('#f-del')?.addEventListener('click', () => { remove('routines', id); closeSheet(); });
+  sheet.querySelector('#f-ok').onclick = () => {
+    const name = sheet.querySelector('#f-name').value.trim(); if (!name) return;
+    save('routines', id, { name, days: [...days].sort(), lastDone: r.lastDone || null });
+    closeSheet();
+  };
+}
+</script>
+</body>
+</html>
