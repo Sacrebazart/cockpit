@@ -7,7 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Cockpit</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23B85C1E'/%3E%3Ccircle cx='32' cy='32' r='9' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="icon" href="icon.svg">
+<link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
 <style>
@@ -327,7 +328,8 @@ async function boot(){
 }
 
 async function enter(u){
-  user = u; show('app'); render();
+  user = u; show("app"); render();
+  if (location.hash === "#noter") setTimeout(() => $("capInput").focus(), 50);
   setSync('', 'connexion…');
   await flush(); await pull();
   sb.channel('entries-live')
@@ -359,6 +361,7 @@ document.body.addEventListener('click', e => {
 });
 
 boot();
+if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("sw.js").catch(() => {});
 
 /* ---------- helpers ---------- */
 const DAYS = ['dim','lun','mar','mer','jeu','ven','sam'];
