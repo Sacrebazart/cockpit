@@ -65,6 +65,7 @@ aside.side{background:var(--surface);border-right:1px solid var(--line);padding:
 .navlist button:hover{background:var(--surface2)}
 .navlist button.on{background:var(--accent-soft);color:var(--now)}
 .navlist svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.navlist .badge[hidden]{display:none}
 .navlist .badge{margin-left:auto;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:700;border-radius:999px;min-width:18px;height:18px;padding:0 5px;display:grid;place-items:center;font-variant-numeric:tabular-nums}
 .side h4{margin:0;padding:0 10px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
 .side .plist button{font-weight:400;font-size:14px}
@@ -219,6 +220,43 @@ aside.detail{background:var(--surface);border-left:1px solid var(--line);positio
 .tagsuggest{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
 .tagsuggest button{font-size:11.5px;color:var(--ink3);border:1px dashed var(--line);border-radius:999px;padding:1px 8px}
 
+/* calendar */
+.calbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.calbar h2{font-size:17px;font-weight:600;margin-right:auto;text-transform:capitalize}
+.calbar .nav button{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:16px}
+.calbar .nav{display:flex;gap:4px}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;min-width:0}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:180px;display:flex;flex-direction:column;overflow:hidden}
+.day.today{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.day.over{background:var(--accent-soft)}
+.day.past{opacity:.7}
+.day .dh{display:flex;justify-content:space-between;align-items:baseline;padding:7px 9px 4px;font-size:12px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em}
+.day.today .dh{color:var(--accent);font-weight:600}
+.day .dh b{font-family:"Sora",sans-serif;font-size:16px;color:var(--ink);font-weight:600} .day.today .dh b{color:var(--accent)}
+.day .dh button{color:var(--ink3);font-size:16px;line-height:1;opacity:0}
+.day:hover .dh button{opacity:1}
+.day .items{display:flex;flex-direction:column;gap:3px;padding:0 6px 6px;flex:1}
+.chip{font-size:12.5px;padding:4px 7px;border-radius:7px;background:var(--surface2);color:var(--ink);display:flex;gap:5px;align-items:flex-start;cursor:pointer;line-height:1.3;overflow-wrap:anywhere}
+.chip.task{border-left:3px solid var(--life)} .chip.task.done{opacity:.5;text-decoration:line-through} .chip.task.late{border-left-color:var(--danger)}
+.chip.event{border-left:3px solid var(--next)} .chip.block{border-left:3px solid var(--now);background:var(--accent-soft)}
+.chip.routine{border-left:3px solid var(--routine);opacity:.85} .chip.routine.done{opacity:.45;text-decoration:line-through}
+.chip .tm{color:var(--ink3);font-variant-numeric:tabular-nums;flex:none;font-size:11.5px}
+.chip .sub{display:block;font-size:11px;color:var(--ink3);margin-top:1px}
+.chip.drag{opacity:.4}
+.month{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.month .wd{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);text-align:center;padding:2px 0}
+.mday{background:var(--surface);border:1px solid var(--line);border-radius:9px;min-height:92px;padding:5px 6px;display:flex;flex-direction:column;gap:2px;font-size:11.5px}
+.mday.out{opacity:.4} .mday.today{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)} .mday.over{background:var(--accent-soft)}
+.mday .n{font-size:12px;color:var(--ink3);display:flex;justify-content:space-between} .mday.today .n{color:var(--accent);font-weight:700}
+.mday .n button{color:var(--ink3);opacity:0} .mday:hover .n button{opacity:1}
+.mday .chip{padding:2px 5px;font-size:11px;border-radius:5px}
+.mday .more{font-size:11px;color:var(--ink3);width:auto;height:auto;margin:0;display:block;text-align:left}
+@media (max-width:899px){
+  .week{grid-template-columns:1fr} .day{min-height:0} .day .dh button,.mday .n button{opacity:1}
+  .mday{min-height:60px;padding:3px 4px} .mday .chip{font-size:0;padding:0;height:5px;border-left:0;background:var(--next)} .mday .chip.task{background:var(--life)} .mday .chip.block{background:var(--now)} .mday .chip.routine{background:var(--routine)} .mday .chip .tm,.mday .chip .sub{display:none}
+  .navlist button.on{background:var(--accent-soft);color:var(--now)}
+}
+
 /* inbox triage */
 .triage{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:10px}
 .triage .t{font-size:17px;font-weight:600;font-family:"Sora",sans-serif}
@@ -277,6 +315,7 @@ nav.tabs{display:none}
   nav.tabs button.on{color:var(--accent)}
   nav.tabs .badge{position:absolute;top:0;right:calc(50% - 22px);min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--accent);color:var(--accent-ink);font-size:10px;font-weight:700;display:grid;place-items:center}
   .capture kbd,.hint-kbd{display:none}
+  nav.tabs .badge[hidden],.navlist .badge[hidden]{display:none}
   .pgrid{grid-template-columns:1fr}
 }
 
@@ -328,7 +367,7 @@ nav.tabs{display:none}
     <div class="navlist plist" id="sideProjects"></div>
     <div class="foot">
       <div class="sync" id="sync">connexion…</div>
-      <div class="hint-kbd"><kbd>N</kbd> noter · <kbd>⌘K</kbd> chercher · <kbd>1</kbd>–<kbd>7</kbd> onglets</div>
+      <div class="hint-kbd"><kbd>N</kbd> noter · <kbd>⌘K</kbd> chercher · <kbd>1</kbd>–<kbd>8</kbd> onglets</div>
     </div>
   </aside>
 
@@ -484,6 +523,10 @@ const openTasks = () => allTasks().filter(i => !i.done);
 const inboxItems = () => Object.values(S.items).filter(i => i.kind === 'inbox').sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
 const ideas = () => Object.values(S.items).filter(i => i.kind === 'idea');
 const lists = () => Object.values(S.items).filter(i => i.kind === 'list').sort(byOrder);
+const events = () => Object.values(S.items).filter(i => i.kind === 'event');
+function dayShift(iso, n){ const [y,m,d] = iso.split('-').map(Number); const dt = new Date(y, m-1, d + n); return isoDay(dt); }
+function weekStart(iso){ const [y,m,d] = iso.split('-').map(Number); const dt = new Date(y, m-1, d); const wd = (dt.getDay()+6)%7; return dayShift(iso, -wd); }
+function dayOfWeek(iso){ const [y,m,d] = iso.split('-').map(Number); return new Date(y,m-1,d).getDay(); }
 const lane = l => Object.values(S.projects).filter(p => p.lane === l).sort(byOrder);
 const isDesktop = () => window.matchMedia('(min-width:900px)').matches;
 let toastT; function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('on'), 2200); }
@@ -525,16 +568,19 @@ const NAV = [
   ['today', "Aujourd'hui", '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>'],
   ['inbox', 'Boîte', '<svg viewBox="0 0 24 24"><path d="M3 13l2.5-8h13L21 13v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 13h5l1.5 3h5L16 13h5"/></svg>'],
   ['projects', 'Projets', '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>'],
+  ['cal', 'Agenda', '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 14h3M13 14h3M8 18h3"/></svg>'],
   ['ideas', 'Idées', '<svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.6 1 1.4 1 2.5h6c0-1.1.3-1.9 1-2.5A6 6 0 0 0 12 3z"/></svg>'],
   ['life', 'Vie', '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>'],
   ['lists', 'Listes', '<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>'],
   ['review', 'Revue', '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>'],
 ];
-const TITLES = { today:"Aujourd'hui", inbox:'Boîte de réception', projects:'Projets', life:'Vie quotidienne', review:'Revue de la semaine', project:'', lists:'Listes', list:'', ideas:'Boîte à idées' };
+const TITLES = { today:"Aujourd'hui", inbox:'Boîte de réception', projects:'Projets', life:'Vie quotidienne', review:'Revue de la semaine', project:'', lists:'Listes', list:'', ideas:'Boîte à idées', cal:'Agenda' };
 let curList = null;
 function go(v, pid){ view = v; if (v === 'list') curList = pid; else curProject = pid || null; selected = null; notesEditing = false; closeForm(); render(); window.scrollTo(0,0); }
 $('sideNav').innerHTML = NAV.map(([v,l,ic]) => `<button data-nav="${v}">${ic}${l}<span class="badge" data-badge="${v}" hidden></span></button>`).join('');
-$('tabs').innerHTML = NAV.map(([v,l,ic]) => `<button data-nav="${v}">${ic}${l}<span class="badge" data-badge="${v}" hidden></span></button>`).join('');
+const MOBILE_MAIN = ['today','inbox','projects','cal'];
+$('tabs').innerHTML = NAV.filter(([v]) => MOBILE_MAIN.includes(v)).map(([v,l,ic]) => `<button data-nav="${v}">${ic}${l}<span class="badge" data-badge="${v}" hidden></span></button>`).join('')
+  + `<button data-act="more-menu"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>Plus</button>`;
 document.body.addEventListener('click', e => {
   if (e.target.closest('[data-act]')) return;
   const b = e.target.closest('[data-nav]'); if (b) { go(b.dataset.nav); return; }
@@ -547,11 +593,12 @@ function render(){
   $('title').textContent = view === 'project' ? (S.projects[curProject]?.name || 'Projet') : view === 'list' ? (S.items[curList]?.title || 'Liste') : TITLES[view];
   const navV = view === 'project' ? 'projects' : view === 'list' ? 'lists' : view;
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === navV));
+  document.querySelectorAll('[data-act="more-menu"]').forEach(b => b.classList.toggle('on', !MOBILE_MAIN.includes(navV)));
   const nb = inboxItems().length; document.querySelectorAll('[data-badge="inbox"]').forEach(b => { b.hidden = !nb; b.textContent = nb; });
   $('sideProjects').innerHTML = lane('now').map(p => `<button data-open-project="${p.id}" class="${view==='project'&&curProject===p.id?'on':''}"><span class="dot" style="background:var(--now)"></span>${esc(p.name)}</button>`).join('') || '<div class="empty" style="padding:4px 10px">aucun</div>';
   $('topActions').innerHTML = '';
-  $('capture').style.display = (view === 'project' || view === 'list') ? 'none' : '';
-  ({ today: renderToday, inbox: renderInbox, projects: renderProjects, project: renderProject, life: renderLife, review: renderReview, lists: renderLists, list: renderList, ideas: renderIdeas })[view]();
+  $('capture').style.display = (view === 'project' || view === 'list' || view === 'cal') ? 'none' : '';
+  ({ today: renderToday, inbox: renderInbox, projects: renderProjects, project: renderProject, life: renderLife, review: renderReview, lists: renderLists, list: renderList, ideas: renderIdeas, cal: renderCal })[view]();
   hydrateImages();
 }
 
@@ -589,6 +636,9 @@ function renderToday(){
   const nowP = lane('now');
   const soon = openTasks().filter(i => i.due && i.due > TODAY && i.due <= addDays(6)).sort((a,b)=>a.due.localeCompare(b.due));
   let h = '';
+  const evs = events().filter(e => e.date === TODAY).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  if (evs.length) h += `<div class="section"><div class="sec-head"><h2>Agenda du jour</h2><span class="count"></span><span class="acts"><button class="pill" data-nav="cal">voir la semaine</button></span></div><div class="list">${evs.map(e => { const p = e.projectId ? S.projects[e.projectId] : null;
+    return `<div class="row" style="border-left:3px solid ${e.block?'var(--now)':'var(--next)'}"><div class="body" data-act="event-edit" data-id="${e.id}" style="cursor:pointer"><div class="t">${e.time?`<span style="color:var(--ink3);font-variant-numeric:tabular-nums;margin-right:8px">${esc(e.time)}</span>`:''}${esc(e.title || (p?p.name:''))}</div><div class="m">${p?`<span class="tag ${p.lane}" data-open-project="${p.id}" style="cursor:pointer">${esc(p.name)}</span>`:''}${e.block&&p?`<span>${p.next?'Prochain pas : '+esc(p.next):'<span class="late">pas de prochain pas défini</span>'}</span>`:''}${e.note?`<span>${esc(e.note).slice(0,80)}</span>`:''}</div></div><button class="more" data-act="event-edit" data-id="${e.id}">···</button></div>`; }).join('')}</div></div>`;
   if (late.length) h += section('En retard', late.map(i=>taskRow(i)), '', late.length);
   h += section("À faire aujourd'hui", today.map(i=>taskRow(i)), "Rien de daté pour aujourd'hui.", today.length || '');
   if (routines.length) h += section('Routines du jour', routines.map(routineRow), '', '');
@@ -757,6 +807,12 @@ document.body.addEventListener('click', e => {
     'notes-save': () => saveNotes(id),
     'link-add': () => linkForm(id),
     'new-list': () => listForm({}),
+    'more-menu': () => openForm(`<div class="detail-head"><h3>Plus</h3><button class="x" data-close>×</button></div><div class="navlist">${NAV.filter(([v]) => !MOBILE_MAIN.includes(v)).map(([v,l,ic]) => `<button data-nav="${v}" data-close>${ic}${l}</button>`).join('')}</div>`),
+    'cal-prev': () => { calShift(-1); render(); }, 'cal-next': () => { calShift(1); render(); }, 'cal-today': () => { calAnchor = TODAY; render(); },
+    'cal-mode': () => { calMode = b.dataset.mode; render(); },
+    'cal-add': () => eventForm({ kind: 'event', date: b.dataset.date || TODAY }),
+    'cal-open-day': () => { calAnchor = b.dataset.date; calMode = 'week'; render(); },
+    'event-edit': () => eventForm(S.items[id]),
     'new-idea': () => openItem({ kind: 'idea' }),
     'idea-tag': () => { ideaTag = b.dataset.tag || null; render(); },
     'promote': () => { const i = S.items[id]; const pid = uid();
@@ -953,6 +1009,75 @@ function pasteImages(el, onPath){
 $('lightbox').addEventListener('click', () => $('lightbox').classList.remove('on'));
 document.body.addEventListener('click', e => { const im = e.target.closest('img.thumb,.notes img'); if (im && im.src) { $('lightbox').querySelector('img').src = im.src; $('lightbox').classList.add('on'); } });
 
+/* ---------- calendar ---------- */
+let calMode = 'week', calAnchor = TODAY;
+function calShift(n){ if (calMode === 'week') calAnchor = dayShift(calAnchor, 7*n); else { const [y,m] = calAnchor.split('-').map(Number); const d = new Date(y, m-1+n, 1); calAnchor = isoDay(d); } }
+function dayChips(iso, compact = false){
+  const wd = dayOfWeek(iso); const out = [];
+  Object.values(S.routines).filter(r => (r.days||[]).includes(wd)).forEach(r => out.push(`<div class="chip routine ${r.lastDone===iso?'done':''}" data-act="${iso===TODAY?'routine-done':'edit-routine'}" data-id="${r.id}">${esc(r.name)}</div>`));
+  events().filter(e => e.date === iso).sort((a,b)=>(a.time||'').localeCompare(b.time||'')).forEach(e => {
+    const p = e.projectId ? S.projects[e.projectId] : null;
+    out.push(`<div class="chip ${e.block?'block':'event'}" draggable="true" data-cal="${e.id}" data-act="event-edit" data-id="${e.id}">${e.time?`<span class="tm">${esc(e.time)}</span>`:''}<span>${esc(e.title || (p ? p.name : 'Sans titre'))}${e.block && p ? `<span class="sub">${p.next ? '→ ' + esc(p.next) : 'pas de prochain pas'}</span>` : ''}</span></div>`);
+  });
+  allTasks().filter(t => t.due === iso).forEach(t => out.push(`<div class="chip task ${t.done?'done':''} ${!t.done && iso<TODAY?'late':''}" draggable="true" data-cal="${t.id}" data-act="select" data-id="${t.id}">${esc(t.title)}${t.projectId?`<span class="sub">${esc(projName(t.projectId))}</span>`:''}</div>`));
+  return out;
+}
+function renderCal(){
+  const bar = `<div class="calbar"><h2 id="calTitle"></h2>
+    <div class="seg"><button class="${calMode==='week'?'on':''}" data-act="cal-mode" data-mode="week">Semaine</button><button class="${calMode==='month'?'on':''}" data-act="cal-mode" data-mode="month">Mois</button></div>
+    <div class="nav"><button data-act="cal-prev" title="Précédent">‹</button><button data-act="cal-today" style="width:auto;padding:0 10px;font-size:13px">Aujourd'hui</button><button data-act="cal-next" title="Suivant">›</button></div>
+    <button class="btn primary sm" data-act="cal-add">+ Événement</button></div>`;
+  let h = bar, title = '';
+  if (calMode === 'week') {
+    const start = weekStart(calAnchor); const days = [...Array(7)].map((_,k) => dayShift(start, k));
+    const [y,m,d] = start.split('-').map(Number); const [y2,m2,d2] = days[6].split('-').map(Number);
+    title = `${d} ${MONTHS[m-1]} – ${d2} ${MONTHS[m2-1]} ${y2}`;
+    h += `<div class="week">${days.map(iso => { const [yy,mm,dd] = iso.split('-').map(Number); const chips = dayChips(iso);
+      return `<div class="day ${iso===TODAY?'today':''} ${iso<TODAY?'past':''}" data-drop="${iso}"><div class="dh"><span>${DAYS[dayOfWeek(iso)]} <b>${dd}</b></span><button data-act="cal-add" data-date="${iso}" title="Ajouter">+</button></div><div class="items">${chips.join('')}</div></div>`; }).join('')}</div>`;
+  } else {
+    const [y,m] = calAnchor.split('-').map(Number); const first = `${y}-${String(m).padStart(2,'0')}-01`;
+    title = `${['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'][m-1]} ${y}`;
+    const start = weekStart(first); const cells = [...Array(42)].map((_,k) => dayShift(start, k));
+    h += `<div class="month">${['lun','mar','mer','jeu','ven','sam','dim'].map(d=>`<div class="wd">${d}</div>`).join('')}${cells.map(iso => { const [yy,mm,dd] = iso.split('-').map(Number); const chips = dayChips(iso, true); const shown = isDesktop() ? chips.slice(0,4) : chips;
+      return `<div class="mday ${mm!==m?'out':''} ${iso===TODAY?'today':''}" data-drop="${iso}"><div class="n"><span>${dd}</span><button data-act="cal-add" data-date="${iso}">+</button></div>${shown.join('')}${chips.length>shown.length?`<button class="more" data-act="cal-open-day" data-date="${iso}">+${chips.length-shown.length}</button>`:''}</div>`; }).join('')}</div>`;
+  }
+  $('content').innerHTML = h; $('calTitle').textContent = title;
+  // drag & drop: move a task or event to another day
+  let dragId = null; const c = $('content');
+  c.addEventListener('dragstart', e => { const ch = e.target.closest('[data-cal]'); if (!ch) return; dragId = ch.dataset.cal; ch.classList.add('drag'); e.dataTransfer.effectAllowed = 'move'; });
+  c.addEventListener('dragover', e => { const z = e.target.closest('[data-drop]'); if (z && dragId) { e.preventDefault(); c.querySelectorAll('.over').forEach(x => x.classList.remove('over')); z.classList.add('over'); } });
+  c.addEventListener('dragleave', e => { const z = e.target.closest('[data-drop]'); if (z && !z.contains(e.relatedTarget)) z.classList.remove('over'); });
+  c.addEventListener('drop', e => { const z = e.target.closest('[data-drop]'); if (!z || !dragId) return; e.preventDefault(); const it = S.items[dragId]; if (!it) return;
+    if (it.kind === 'task') save('items', dragId, { due: z.dataset.drop }); else save('items', dragId, { date: z.dataset.drop }); toast('Déplacé au ' + fmtDate(z.dataset.drop)); dragId = null; });
+  c.addEventListener('dragend', () => { c.querySelectorAll('.drag,.over').forEach(x => x.classList.remove('drag','over')); dragId = null; });
+}
+function eventForm(ev){
+  const isNew = !ev.id; const id = ev.id || uid();
+  openForm(`<div class="detail-head"><h3>${isNew ? 'Nouvel événement' : (ev.block ? 'Créneau projet' : 'Événement')}</h3><button class="x" data-close>×</button></div>
+    <div class="field"><label>Type</label><div class="seg" id="evKind"><button type="button" data-b="0">Rendez-vous</button><button type="button" data-b="1">Créneau projet</button></div></div>
+    <div class="field"><label>Titre</label><input id="f-title" value="${esc(ev.title||'')}" placeholder="ex. Dentiste, Tournage Marc, ou vide pour un créneau"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="field"><label>Date</label><input id="f-date" type="date" value="${ev.date||TODAY}"></div><div class="field"><label>Heure</label><input id="f-time" type="time" value="${ev.time||''}"></div></div>
+    <div class="field"><label>Projet</label><select id="f-proj">${projectOptions(ev.projectId)}</select></div>
+    <div class="field"><label>Répéter chaque semaine</label><div class="seg"><button type="button" class="pill" id="f-rep">Créer les 4 prochaines semaines aussi</button></div></div>
+    <div class="field"><label>Note</label><textarea id="f-note">${esc(ev.note||'')}</textarea></div>
+    <div class="btns"><div>${isNew?'':'<button class="btn danger" id="f-del">Supprimer</button>'}</div><div style="display:flex;gap:8px"><button class="btn" data-close>Fermer</button><button class="btn primary" id="f-ok">Enregistrer</button></div></div>`);
+  let block = !!ev.block, rep4 = false; const H = formHost();
+  const syncK = () => H.querySelectorAll('#evKind button').forEach(b => b.classList.toggle('on', (+b.dataset.b===1) === block));
+  syncK();
+  H.querySelector('#evKind').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { block = b.dataset.b === '1'; syncK(); if (block && !H.querySelector('#f-title').value) H.querySelector('#f-title').placeholder = 'vide = nom du projet'; } });
+  H.querySelector('#f-rep').onclick = e => { rep4 = !rep4; e.target.classList.toggle('on', rep4); };
+  H.querySelector('#f-del')?.addEventListener('click', () => { remove('items', id); closeForm(); });
+  const ok = () => {
+    const date = H.querySelector('#f-date').value; if (!date) return;
+    const base = { kind: 'event', title: H.querySelector('#f-title').value.trim(), time: H.querySelector('#f-time').value || '', projectId: H.querySelector('#f-proj').value || null, block, note: H.querySelector('#f-note').value.trim(), createdAt: ev.createdAt || now() };
+    if (block && !base.projectId && !base.title) { toast('Un créneau projet a besoin d\'un projet.'); return; }
+    save('items', id, { ...base, date }, { silent: true });
+    if (rep4) for (let k = 1; k <= 4; k++) save('items', uid(), { ...base, date: dayShift(date, 7*k) }, { silent: true });
+    closeForm(); render(); toast('Enregistré.');
+  };
+  H.querySelector('#f-ok').onclick = ok; H.querySelector('#f-title').addEventListener('keydown', e => { if (e.key === 'Enter') ok(); });
+}
+
 /* ---------- ideas ---------- */
 let ideaTag = null;
 const ideaScore = i => (i.pays||0) + (i.want||0);
@@ -1079,7 +1204,8 @@ function palSearch(q){
   q = q.trim().toLowerCase(); const hit = s => !q || (s||'').toLowerCase().includes(q);
   palItems = [];
   Object.values(S.projects).forEach(p => { if (hit(p.name) || hit(p.why) || hit(p.notes)) palItems.push({ k: 'projet', t: p.name, go: () => go('project', p.id) }); });
-  Object.values(S.items).forEach(i => { if (i.kind === 'list') return; if (hit(i.title) || hit(i.note)) palItems.push({ k: i.kind === 'idea' ? 'idée' : i.kind === 'inbox' ? 'boîte' : (i.done ? 'fait' : 'tâche'), t: i.title, sub: projName(i.projectId), go: () => { if (i.projectId) go('project', i.projectId); else go(i.kind==='inbox'?'inbox':i.kind==='idea'?'ideas':'life'); setTimeout(() => openItem(S.items[i.id]), 50); } }); });
+  events().forEach(e => { if (hit(e.title) || hit(e.note)) palItems.push({ k: 'agenda', t: (e.title || projName(e.projectId)) + ' · ' + fmtDate(e.date), go: () => { calAnchor = e.date; calMode = 'week'; go('cal'); } }); });
+  Object.values(S.items).forEach(i => { if (i.kind === 'list' || i.kind === 'event') return; if (hit(i.title) || hit(i.note)) palItems.push({ k: i.kind === 'idea' ? 'idée' : i.kind === 'inbox' ? 'boîte' : (i.done ? 'fait' : 'tâche'), t: i.title, sub: projName(i.projectId), go: () => { if (i.projectId) go('project', i.projectId); else go(i.kind==='inbox'?'inbox':i.kind==='idea'?'ideas':'life'); setTimeout(() => openItem(S.items[i.id]), 50); } }); });
   lists().forEach(l => { if (hit(l.title) || (l.entries||[]).some(e => hit(e.t))) palItems.push({ k: 'liste', t: l.title, go: () => go('list', l.id) }); });
   palItems = palItems.slice(0, 40); palIdx = 0; drawPal();
 }
@@ -1099,7 +1225,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (palBg.classList.contains('on')) closePal(); else closeForm(); return; }
   if (typing) return;
   if (e.key === 'n' || e.key === 'N') { e.preventDefault(); if (view === 'project') openItem({ kind: 'task', projectId: curProject }); else $('capInput').focus(); }
-  const num = { '1':'today','2':'inbox','3':'projects','4':'ideas','5':'life','6':'lists','7':'review' }[e.key]; if (num && !e.metaKey && !e.ctrlKey) go(num);
+  const num = { '1':'today','2':'inbox','3':'projects','4':'cal','5':'ideas','6':'life','7':'lists','8':'review' }[e.key]; if (num && !e.metaKey && !e.ctrlKey) go(num);
 });
 </script>
 </body>
