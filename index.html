@@ -91,11 +91,18 @@ aside.detail{background:var(--surface);border-left:1px solid var(--line);positio
 .x:hover{background:var(--surface2);color:var(--ink)}
 
 /* capture */
-.capture{display:flex;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:8px 8px 8px 14px;box-shadow:var(--shadow);margin-bottom:20px}
-.capture input{flex:1;border:0;background:none;font-size:16px;min-width:0}
-.capture input::placeholder{color:var(--ink3)}
-.capture button{background:var(--accent);color:var(--accent-ink);font-weight:600;border-radius:10px;padding:8px 14px;font-size:14px}
-.capture kbd{align-self:center}
+.capture{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:8px 8px 8px 8px;box-shadow:var(--shadow);margin-bottom:20px}
+.capline{display:flex;gap:8px;align-items:center;padding-left:6px}
+.capline input{flex:1;border:0;background:none;font-size:16px;min-width:0}
+.capline input::placeholder{color:var(--ink3)}
+.capline button{background:var(--accent);color:var(--accent-ink);font-weight:600;border-radius:10px;padding:8px 14px;font-size:14px}
+.capopts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:0 0 2px 6px}
+.capopts .seg button{padding:4px 10px;font-size:12.5px}
+.capopts select{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12.5px;color:var(--ink2);max-width:180px}
+.capopts #capDateIn{border:1px solid var(--line);border-radius:999px;padding:3px 8px;font-size:12px;background:var(--surface);color:var(--ink2);width:34px;height:28px}
+.capopts #capDateIn.set{width:auto;color:var(--ink);border-color:var(--ink)}
+.capopts #capDate,.capopts #capProj{display:none} .capture.task .capopts #capDate,.capture.task .capopts #capProj,.capture.idea .capopts #capProj{display:flex}
+.capopts .pill{margin-left:auto}
 
 /* sections & rows */
 .section{margin-bottom:26px}
@@ -391,8 +398,13 @@ nav.tabs{display:none}
   <main class="main"><div class="main-in">
     <div class="top"><div><h1 id="title"></h1><div class="date" id="date"></div></div><div id="topActions"></div></div>
     <form class="capture" id="capture">
-      <input id="capInput" placeholder="Une idée, une tâche, un truc à ne pas oublier…" autocomplete="off">
-      <kbd>N</kbd><button type="submit">Noter</button>
+      <div class="capline"><input id="capInput" placeholder="Une idée, une tâche, un truc à ne pas oublier…" autocomplete="off"><kbd>N</kbd><button type="submit" id="capBtn">Noter</button></div>
+      <div class="capopts">
+        <div class="seg" id="capKind"><button type="button" data-k="inbox">Boîte</button><button type="button" data-k="task">Tâche</button><button type="button" data-k="idea">Idée</button></div>
+        <div class="seg" id="capDate"><button type="button" data-d="">sans date</button><button type="button" data-d="0">aujourd'hui</button><button type="button" data-d="1">demain</button><button type="button" data-d="7">dans 7 j</button><input type="date" id="capDateIn" title="autre date"></div>
+        <select id="capProj"></select>
+        <button type="button" class="pill" id="capMore" title="Ouvrir le formulaire complet">détails…</button>
+      </div>
     </form>
     <div id="content"></div>
   </div></main>
@@ -574,12 +586,29 @@ function md(src){
 }
 
 /* ---------- capture ---------- */
+let capKind = 'inbox', capDate = null; try { capKind = localStorage.getItem('cockpit-capkind') || 'inbox'; } catch(e){}
+function drawCap(){
+  const f = $('capture'); f.classList.toggle('task', capKind === 'task'); f.classList.toggle('idea', capKind === 'idea');
+  f.querySelectorAll('#capKind button').forEach(b => b.classList.toggle('on', b.dataset.k === capKind));
+  const quick = ['', '0', '1', '7'].map(d => d === '' ? null : addDays(+d));
+  f.querySelectorAll('#capDate button').forEach(b => b.classList.toggle('on', (b.dataset.d === '' ? null : addDays(+b.dataset.d)) === capDate));
+  const di = $('capDateIn'); const custom = capDate && !quick.includes(capDate); di.classList.toggle('set', !!custom); if (!custom) di.value = '';
+  $('capBtn').textContent = { inbox: 'Noter', task: 'Ajouter la tâche', idea: 'Garder l\'idée' }[capKind];
+  $('capInput').placeholder = { inbox: 'Une idée, une tâche, un truc à ne pas oublier…', task: 'Quelle tâche ? (Entrée pour ajouter)', idea: 'Quelle idée ?' }[capKind];
+}
+function drawCapProj(){ const sel = $('capProj'); const cur = sel.value; sel.innerHTML = projectOptions(cur); if (view === 'project' && curProject) sel.value = curProject; }
+$('capKind').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; capKind = b.dataset.k; try { localStorage.setItem('cockpit-capkind', capKind); } catch(e){} drawCap(); $('capInput').focus(); });
+$('capDate').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; capDate = b.dataset.d === '' ? null : addDays(+b.dataset.d); drawCap(); $('capInput').focus(); });
+$('capDateIn').addEventListener('change', e => { capDate = e.target.value || null; drawCap(); });
+$('capMore').addEventListener('click', () => { const t = $('capInput').value.trim(); openItem({ kind: capKind === 'inbox' ? 'task' : capKind, title: t, due: capDate, projectId: $('capProj').value || null }); $('capInput').value = ''; });
 $('capture').addEventListener('submit', e => {
   e.preventDefault();
   const inp = $('capInput'); const t = inp.value.trim(); if (!t) return;
-  save('items', uid(), { kind: 'inbox', title: t, createdAt: now() });
-  inp.value = ''; toast('Noté. Tu tries plus tard.');
+  const projectId = capKind !== 'inbox' ? ($('capProj').value || null) : null;
+  save('items', uid(), { kind: capKind, title: t, createdAt: now(), due: capKind === 'task' ? capDate : null, projectId, order: Date.now() });
+  inp.value = ''; toast({ inbox: 'Noté. Tu tries plus tard.', task: capDate ? 'Tâche ajoutée pour ' + fmtDate(capDate) : 'Tâche ajoutée, sans date.', idea: 'Idée gardée.' }[capKind]);
 });
+drawCap();
 
 /* ---------- navigation ---------- */
 let view = 'today', curProject = null, selected = null;
@@ -589,12 +618,12 @@ const NAV = [
   ['projects', 'Projets', '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>'],
   ['cal', 'Agenda', '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 14h3M13 14h3M8 18h3"/></svg>'],
   ['ideas', 'Idées', '<svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.6 1 1.4 1 2.5h6c0-1.1.3-1.9 1-2.5A6 6 0 0 0 12 3z"/></svg>'],
-  ['life', 'Vie', '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>'],
+  ['life', 'Tâches', '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>'],
   ['lists', 'Listes', '<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>'],
   ['contacts', 'Contacts', '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'],
   ['review', 'Revue', '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>'],
 ];
-const TITLES = { today:"Aujourd'hui", inbox:'Boîte de réception', projects:'Projets', life:'Vie quotidienne', review:'Revue de la semaine', project:'', lists:'Listes', list:'', ideas:'Boîte à idées', cal:'Agenda', contacts:'Carnet d\'adresses' };
+const TITLES = { today:"Aujourd'hui", inbox:'Boîte de réception', projects:'Projets', life:'Tâches', review:'Revue de la semaine', project:'', lists:'Listes', list:'', ideas:'Boîte à idées', cal:'Agenda', contacts:'Carnet d\'adresses' };
 let curList = null;
 function go(v, pid){ view = v; if (v === 'list') curList = pid; else curProject = pid || null; selected = null; notesEditing = false; closeForm(); render(); window.scrollTo(0,0); }
 $('sideNav').innerHTML = NAV.map(([v,l,ic]) => `<button data-nav="${v}">${ic}${l}<span class="badge" data-badge="${v}" hidden></span></button>`).join('');
@@ -617,7 +646,8 @@ function render(){
   const nb = inboxItems().length; document.querySelectorAll('[data-badge="inbox"]').forEach(b => { b.hidden = !nb; b.textContent = nb; });
   $('sideProjects').innerHTML = lane('now').map(p => `<button data-open-project="${p.id}" class="${view==='project'&&curProject===p.id?'on':''}"><span class="dot" style="background:var(--now)"></span>${esc(p.name)}</button>`).join('') || '<div class="empty" style="padding:4px 10px">aucun</div>';
   $('topActions').innerHTML = '';
-  $('capture').style.display = (view === 'project' || view === 'list' || view === 'cal' || view === 'contacts') ? 'none' : '';
+  $('capture').style.display = (view === 'list' || view === 'cal' || view === 'contacts') ? 'none' : '';
+  drawCapProj();
   ({ today: renderToday, inbox: renderInbox, projects: renderProjects, project: renderProject, life: renderLife, review: renderReview, lists: renderLists, list: renderList, ideas: renderIdeas, cal: renderCal, contacts: renderContacts })[view]();
   hydrateImages();
 }
@@ -761,16 +791,27 @@ function setupDrag(){
   list.addEventListener('dragend', () => { list.querySelectorAll('.drag').forEach(x => x.classList.remove('drag')); dragId = null; });
 }
 
+let taskFilter = 'all';
 function renderLife(){
-  const tasks = openTasks().sort((a,b) => (a.due||'9999').localeCompare(b.due||'9999'));
-  const dated = tasks.filter(t => t.due), undated = tasks.filter(t => !t.due && !t.projectId);
-  const doneRecent = allTasks().filter(i => i.done).sort((a,b)=>(b.doneAt||'').localeCompare(a.doneAt||'')).slice(0,8);
   const routines = Object.values(S.routines).sort((a,b)=>a.name.localeCompare(b.name));
   $('topActions').innerHTML = `<div style="display:flex;gap:8px"><button class="btn" data-act="new-routine">+ Routine</button><button class="btn primary" data-act="new-task">+ Tâche</button></div>`;
-  let h = section('Échéances', dated.map(i=>taskRow(i)), 'Aucune tâche datée.', dated.length || '');
-  h += section('Sans date, hors projet', undated.map(i=>taskRow(i)), 'Rien.', undated.length || '');
+  const projs = [...lane('now'), ...lane('next'), ...lane('parked')].filter(p => openTasks().some(t => t.projectId === p.id));
+  const hasLoose = openTasks().some(t => !t.projectId);
+  let all = openTasks(); if (taskFilter === 'none') all = all.filter(t => !t.projectId); else if (taskFilter !== 'all') all = all.filter(t => t.projectId === taskFilter);
+  all.sort((a,b) => (a.due||'9999').localeCompare(b.due||'9999') || byOrder(a,b));
+  const late = all.filter(t => t.due && t.due < TODAY), today = all.filter(t => t.due === TODAY), tomorrow = all.filter(t => t.due === addDays(1));
+  const week = all.filter(t => t.due && t.due > addDays(1) && t.due <= addDays(6)), later = all.filter(t => t.due && t.due > addDays(6)), undated = all.filter(t => !t.due);
+  const doneRecent = allTasks().filter(i => i.done).sort((a,b)=>(b.doneAt||'').localeCompare(a.doneAt||'')).slice(0,8);
+  let h = `<div class="chips"><button class="pill ${taskFilter==='all'?'on':''}" data-act="task-filter" data-f="all">Tout · ${openTasks().length}</button>${hasLoose?`<button class="pill ${taskFilter==='none'?'on':''}" data-act="task-filter" data-f="none">Hors projet</button>`:''}${projs.map(p=>`<button class="pill ${taskFilter===p.id?'on':''}" data-act="task-filter" data-f="${p.id}">${esc(p.name)}</button>`).join('')}</div>`;
+  if (!all.length) h += `<div class="empty">Rien à faire ici. Ajoute une tâche avec la barre du haut, en choisissant « Tâche ».</div>`;
+  if (late.length) h += section('En retard', late.map(i=>taskRow(i)), '', late.length);
+  if (today.length) h += section("Aujourd'hui", today.map(i=>taskRow(i)), '', today.length);
+  if (tomorrow.length) h += section('Demain', tomorrow.map(i=>taskRow(i)), '', tomorrow.length);
+  if (week.length) h += section('Cette semaine', week.map(i=>taskRow(i)), '', week.length);
+  if (later.length) h += section('Plus tard', later.map(i=>taskRow(i)), '', later.length);
+  if (undated.length) h += section('Sans date', undated.map(i=>taskRow(i)), '', undated.length);
   h += section('Routines', routines.map(routineRow), 'Aucune routine. Exemples : course à pied, batch com, revue du dimanche.', '');
-  if (doneRecent.length) h += section('Terminé récemment', doneRecent.map(i=>taskRow(i)), '', '');
+  if (doneRecent.length) h += `<details><summary style="cursor:pointer;color:var(--ink3);font-size:13px;margin-bottom:8px">Terminé récemment</summary>${section('', doneRecent.map(i=>taskRow(i)), '', '')}</details>`;
   $('content').innerHTML = h;
 }
 
@@ -841,6 +882,7 @@ document.body.addEventListener('click', e => {
     'notes-save': () => saveNotes(id),
     'link-add': () => linkForm(id),
     'new-list': () => listForm({}),
+    'task-filter': () => { taskFilter = b.dataset.f; render(); },
     'new-contact': () => contactForm({}),
     'export-json': () => { const blob = new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `cockpit-${TODAY}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); },
     'add-contact-for': () => contactForm({ projectIds: [id] }),
