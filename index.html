@@ -182,6 +182,29 @@ aside.detail{background:var(--surface);border-left:1px solid var(--line);positio
 .journal div::before{content:"";position:absolute;left:-19px;top:11px;width:8px;height:8px;border-radius:50%;background:var(--ok)}
 .journal small{display:block;color:var(--ink3);font-size:12px}
 
+/* lists */
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.lcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:6px;transition:transform .12s}
+.lcard:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.lcard .n{font-family:"Sora",sans-serif;font-weight:600;font-size:15.5px}
+.lcard .foot{font-size:12px;color:var(--ink3);font-variant-numeric:tabular-nums}
+.lcard .thumbs{display:flex;gap:4px;margin-top:2px}
+.lcard .thumbs img{width:34px;height:34px;object-fit:cover;border-radius:6px;background:var(--surface2)}
+.addline{display:flex;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 12px;margin-bottom:10px}
+.addline input{flex:1;border:0;background:none;font-size:15px;min-width:0}
+.addline button{background:var(--ink);color:var(--bg);border-radius:8px;padding:6px 12px;font-weight:600;font-size:13px}
+.row .thumb{width:52px;height:52px;object-fit:cover;border-radius:8px;flex:none;background:var(--surface2);cursor:zoom-in}
+.row .lnk{color:var(--next);font-size:12.5px;text-decoration:none;display:inline-flex;gap:4px;align-items:center;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.imgdrop{border:1.5px dashed var(--line);border-radius:10px;padding:12px;text-align:center;color:var(--ink3);font-size:13px;cursor:pointer;position:relative}
+.imgdrop.over{border-color:var(--accent);color:var(--accent)}
+.imgdrop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.imgprev{position:relative;display:inline-block}
+.imgprev img{max-width:100%;max-height:200px;border-radius:10px;display:block}
+.imgprev button{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border-radius:999px;width:24px;height:24px;font-size:14px}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:60;display:none;align-items:center;justify-content:center;cursor:zoom-out}
+.lightbox.on{display:flex} .lightbox img{max-width:94vw;max-height:94vh;border-radius:8px}
+.notes img[data-storage]:not([src]){min-height:60px;background:var(--surface2)}
+
 /* inbox triage */
 .triage{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:10px}
 .triage .t{font-size:17px;font-weight:600;font-family:"Sora",sans-serif}
@@ -291,7 +314,7 @@ nav.tabs{display:none}
     <div class="navlist plist" id="sideProjects"></div>
     <div class="foot">
       <div class="sync" id="sync">connexion…</div>
-      <div class="hint-kbd"><kbd>N</kbd> noter · <kbd>⌘K</kbd> chercher · <kbd>1</kbd>–<kbd>5</kbd> onglets</div>
+      <div class="hint-kbd"><kbd>N</kbd> noter · <kbd>⌘K</kbd> chercher · <kbd>1</kbd>–<kbd>6</kbd> onglets</div>
     </div>
   </aside>
 
@@ -312,6 +335,7 @@ nav.tabs{display:none}
 
 <div class="sheet-bg" id="sheetBg"><div class="sheet" id="sheet" role="dialog"></div></div>
 <div class="pal-bg" id="palBg"><div class="pal"><input id="palInput" placeholder="Chercher une tâche, un projet, une idée…"><div class="res" id="palRes"></div></div></div>
+<div class="lightbox" id="lightbox"><img alt=""></div>
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -445,6 +469,7 @@ const allTasks = () => Object.values(S.items).filter(i => i.kind === 'task');
 const openTasks = () => allTasks().filter(i => !i.done);
 const inboxItems = () => Object.values(S.items).filter(i => i.kind === 'inbox').sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
 const ideas = () => Object.values(S.items).filter(i => i.kind === 'idea');
+const lists = () => Object.values(S.items).filter(i => i.kind === 'list').sort(byOrder);
 const lane = l => Object.values(S.projects).filter(p => p.lane === l).sort(byOrder);
 const isDesktop = () => window.matchMedia('(min-width:900px)').matches;
 let toastT; function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('on'), 2200); }
@@ -454,6 +479,7 @@ function md(src){
   if (!src || !src.trim()) return '';
   const lines = esc(src).split('\n'); let out = '', inList = false;
   const inline = s => s
+    .replace(/!\[([^\]]*)\]\(storage:([^\s)]+)\)/g, '<img data-storage="$2" alt="$1">')
     .replace(/!\[([^\]]*)\]\((https?:[^\s)]+)\)/g, '<img src="$2" alt="$1">')
     .replace(/\[([^\]]+)\]\((https?:[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
     .replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>')
@@ -486,10 +512,12 @@ const NAV = [
   ['inbox', 'Boîte', '<svg viewBox="0 0 24 24"><path d="M3 13l2.5-8h13L21 13v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 13h5l1.5 3h5L16 13h5"/></svg>'],
   ['projects', 'Projets', '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>'],
   ['life', 'Vie', '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>'],
+  ['lists', 'Listes', '<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>'],
   ['review', 'Revue', '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>'],
 ];
-const TITLES = { today:"Aujourd'hui", inbox:'Boîte de réception', projects:'Projets', life:'Vie quotidienne', review:'Revue de la semaine', project:'' };
-function go(v, pid){ view = v; curProject = pid || null; selected = null; notesEditing = false; closeForm(); render(); window.scrollTo(0,0); }
+const TITLES = { today:"Aujourd'hui", inbox:'Boîte de réception', projects:'Projets', life:'Vie quotidienne', review:'Revue de la semaine', project:'', lists:'Listes', list:'' };
+let curList = null;
+function go(v, pid){ view = v; if (v === 'list') curList = pid; else curProject = pid || null; selected = null; notesEditing = false; closeForm(); render(); window.scrollTo(0,0); }
 $('sideNav').innerHTML = NAV.map(([v,l,ic]) => `<button data-nav="${v}">${ic}${l}<span class="badge" data-badge="${v}" hidden></span></button>`).join('');
 $('tabs').innerHTML = NAV.map(([v,l,ic]) => `<button data-nav="${v}">${ic}${l}<span class="badge" data-badge="${v}" hidden></span></button>`).join('');
 document.body.addEventListener('click', e => {
@@ -501,14 +529,15 @@ document.body.addEventListener('click', e => {
 /* ---------- rendering ---------- */
 function render(){
   $('date').textContent = fmtDate(TODAY) + ' ' + new Date().getFullYear();
-  $('title').textContent = view === 'project' ? (S.projects[curProject]?.name || 'Projet') : TITLES[view];
-  const navV = view === 'project' ? 'projects' : view;
+  $('title').textContent = view === 'project' ? (S.projects[curProject]?.name || 'Projet') : view === 'list' ? (S.items[curList]?.title || 'Liste') : TITLES[view];
+  const navV = view === 'project' ? 'projects' : view === 'list' ? 'lists' : view;
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === navV));
   const nb = inboxItems().length; document.querySelectorAll('[data-badge="inbox"]').forEach(b => { b.hidden = !nb; b.textContent = nb; });
   $('sideProjects').innerHTML = lane('now').map(p => `<button data-open-project="${p.id}" class="${view==='project'&&curProject===p.id?'on':''}"><span class="dot" style="background:var(--now)"></span>${esc(p.name)}</button>`).join('') || '<div class="empty" style="padding:4px 10px">aucun</div>';
   $('topActions').innerHTML = '';
-  $('capture').style.display = view === 'project' ? 'none' : '';
-  ({ today: renderToday, inbox: renderInbox, projects: renderProjects, project: renderProject, life: renderLife, review: renderReview })[view]();
+  $('capture').style.display = (view === 'project' || view === 'list') ? 'none' : '';
+  ({ today: renderToday, inbox: renderInbox, projects: renderProjects, project: renderProject, life: renderLife, review: renderReview, lists: renderLists, list: renderList })[view]();
+  hydrateImages();
 }
 
 const CHK = '<svg viewBox="0 0 12 12"><path d="M2 6.5 5 9l5-6" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -627,7 +656,7 @@ function renderProject(){
     ${journal.length ? `<div class="journal">${journal.map(j => `<div>${esc(j.text)}<small>${fmtDT(j.at)}</small></div>`).join('')}</div>` : '<div class="empty">Chaque « Fait ✓ » sur un prochain pas s\'archive ici. Le chemin parcouru.</div>'}</div>`;
   h += `<div class="pcols wide"><div>${stepsHtml}${notesHtml}</div><div>${linksHtml}${ideasHtml}${journalHtml}</div></div>`;
   $('content').innerHTML = h;
-  if (notesEditing) { const a = $('notesArea'); a.focus(); a.addEventListener('keydown', e => { if ((e.metaKey||e.ctrlKey) && e.key === 'Enter') saveNotes(p.id); }); }
+  if (notesEditing) { const a = $('notesArea'); a.focus(); a.addEventListener('keydown', e => { if ((e.metaKey||e.ctrlKey) && e.key === 'Enter') saveNotes(p.id); }); pasteImages(a, path => { const at = a.selectionStart; a.value = a.value.slice(0, at) + `\n![](storage:${path})\n` + a.value.slice(at); }); }
   setupDrag();
 }
 function saveNotes(pid){ save('projects', pid, { notes: $('notesArea').value }, { silent: true }); notesEditing = false; render(); toast('Notes enregistrées.'); }
@@ -685,7 +714,7 @@ document.body.addEventListener('change', e => {
   save('items', i.id, { subtasks: subs });
 });
 document.body.addEventListener('click', e => {
-  if (e.target.closest('[data-open-project]')) return;
+  if (e.target.closest('[data-open-project],[data-ext]')) return;
   const b = e.target.closest('[data-act]'); if (!b) return;
   e.preventDefault(); e.stopPropagation();
   const id = b.dataset.id, act = b.dataset.act;
@@ -712,6 +741,12 @@ document.body.addEventListener('click', e => {
     'notes-cancel': () => { notesEditing = false; render(); },
     'notes-save': () => saveNotes(id),
     'link-add': () => linkForm(id),
+    'new-list': () => listForm({}),
+    'edit-list': () => listForm(S.items[id]),
+    'open-list': () => go('list', id),
+    'list-reset': () => { save('items', id, { entries: (S.items[id].entries||[]).map(x => ({ ...x, done: false, subs: (x.subs||[]).map(s => ({...s, done:false})) })) }); toast('Liste remise à zéro.'); },
+    'entry-toggle': () => { const x = S.items[id].entries[+b.dataset.k]; setEntry(id, +b.dataset.k, { done: !x.done }); },
+    'entry-edit': () => entryForm(id, +b.dataset.k),
     'link-rm': () => { const p = S.projects[id]; const links = (p.links||[]).filter((_,k) => k !== +b.dataset.k); save('projects', id, { links }); },
   };
   A[act]?.();
@@ -834,6 +869,144 @@ function routineForm(r){
   H.querySelector('#f-ok').onclick = () => { const name = H.querySelector('#f-name').value.trim(); if (!name) return; save('routines', id, { name, days: [...days].sort(), lastDone: r.lastDone || null }); closeForm(); };
 }
 
+/* ---------- images (Supabase Storage, bucket privé « images ») ---------- */
+const signed = {}; let hydrating = false;
+async function signedUrl(path){
+  const c = signed[path]; if (c && c.exp > Date.now()) return c.url;
+  if (!sb) return null;
+  const { data, error } = await sb.storage.from('images').createSignedUrl(path, 3600);
+  if (error) return null;
+  signed[path] = { url: data.signedUrl, exp: Date.now() + 3300*1000 }; return data.signedUrl;
+}
+async function hydrateImages(){
+  const imgs = [...document.querySelectorAll('img[data-storage]:not([src])')]; if (!imgs.length) return;
+  await Promise.all(imgs.map(async im => { const u = await signedUrl(im.dataset.storage); if (u) im.src = u; }));
+}
+function shrink(file, max = 1600){
+  return new Promise(res => {
+    const img = new Image(); const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const r = Math.min(1, max / Math.max(img.width, img.height));
+      if (r === 1 && file.size < 900*1024) { URL.revokeObjectURL(url); return res(file); }
+      const c = document.createElement('canvas'); c.width = Math.round(img.width*r); c.height = Math.round(img.height*r);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(b => { URL.revokeObjectURL(url); res(b || file); }, 'image/jpeg', .86);
+    };
+    img.onerror = () => res(file); img.src = url;
+  });
+}
+async function uploadImage(file){
+  if (!sb || !user) { toast('Connecte-toi pour ajouter une image.'); return null; }
+  if (!file.type.startsWith('image/')) { toast('Ce fichier n\'est pas une image.'); return null; }
+  toast('Envoi de l\'image…');
+  const blob = await shrink(file);
+  const ext = blob.type === 'image/png' ? 'png' : blob.type === 'image/gif' ? 'gif' : blob.type === 'image/webp' ? 'webp' : 'jpg';
+  const path = `${user.id}/${uid()}.${ext}`;
+  const { error } = await sb.storage.from('images').upload(path, blob, { contentType: blob.type, upsert: false });
+  if (error) { toast('Image refusée : ' + error.message); return null; }
+  return path;
+}
+async function deleteImage(path){ if (sb && path) sb.storage.from('images').remove([path]).catch(() => {}); }
+function pasteImages(el, onPath){
+  el.addEventListener('paste', async e => {
+    const f = [...(e.clipboardData?.files || [])].find(f => f.type.startsWith('image/')); if (!f) return;
+    e.preventDefault(); const path = await uploadImage(f); if (path) onPath(path);
+  });
+}
+$('lightbox').addEventListener('click', () => $('lightbox').classList.remove('on'));
+document.body.addEventListener('click', e => { const im = e.target.closest('img.thumb,.notes img'); if (im && im.src) { $('lightbox').querySelector('img').src = im.src; $('lightbox').classList.add('on'); } });
+
+/* ---------- lists ---------- */
+function listStats(l){ const e = l.entries || []; return { total: e.length, done: e.filter(x => x.done).length }; }
+function renderLists(){
+  const ls = lists();
+  $('topActions').innerHTML = `<button class="btn primary" data-act="new-list">+ Nouvelle liste</button>`;
+  $('content').innerHTML = ls.length
+    ? `<div class="lgrid">${ls.map(l => { const st = listStats(l); const th = (l.entries||[]).filter(x => x.img).slice(0,4);
+        return `<div class="lcard" data-act="open-list" data-id="${l.id}"><div class="n">${esc(l.title)}</div>
+          ${l.note ? `<div style="font-size:13px;color:var(--ink2)">${esc(l.note).slice(0,90)}</div>` : ''}
+          ${st.total ? `<div class="bar"><i style="width:${Math.round(st.done/st.total*100)}%"></i></div>` : ''}
+          ${th.length ? `<div class="thumbs">${th.map(x => `<img data-storage="${esc(x.img)}" alt="">`).join('')}</div>` : ''}
+          <div class="foot">${st.done}/${st.total} coché${st.done>1?'s':''}${l.reusable ? ' · réutilisable' : ''}</div></div>`; }).join('')}</div>`
+    : `<div class="empty">Aucune liste. Courses, matériel photo, kit safari, checklist tournage, films à voir…</div>`;
+}
+function renderList(){
+  const l = S.items[curList]; if (!l) { go('lists'); return; }
+  const entries = l.entries || []; const st = listStats(l);
+  $('topActions').innerHTML = `<div style="display:flex;gap:8px">${st.done ? `<button class="btn" data-act="list-reset" data-id="${l.id}">Tout décocher</button>` : ''}<button class="btn" data-act="edit-list" data-id="${l.id}">Modifier</button></div>`;
+  const rows = entries.map((x, k) => `<div class="row ${x.done?'done':''}" draggable="true" data-drag="${k}">
+      <span class="grip">⋮⋮</span>
+      <button class="chk ${x.done?'on':''}" data-act="entry-toggle" data-id="${l.id}" data-k="${k}">${CHK}</button>
+      ${x.img ? `<img class="thumb" data-storage="${esc(x.img)}" alt="">` : ''}
+      <div class="body" data-act="entry-edit" data-id="${l.id}" data-k="${k}" style="cursor:pointer"><div class="t">${esc(x.t)}</div>
+        <div class="m">${x.url ? `<a class="lnk" href="${esc(x.url)}" target="_blank" rel="noopener" data-ext>🔗 ${esc(x.url.replace(/^https?:\/\/(www\.)?/,''))}</a>` : ''}${x.qty ? `<span>× ${esc(x.qty)}</span>` : ''}${x.note ? `<span>${esc(x.note).slice(0,90)}</span>` : ''}</div>
+        ${(x.subs||[]).length && !x.done ? `<div class="sub">${x.subs.map((s,j)=>`<label class="${s.done?'done':''}"><input type="checkbox" data-esub="${l.id}" data-k="${k}" data-j="${j}" ${s.done?'checked':''}>${esc(s.t)}</label>`).join('')}</div>` : ''}</div>
+      <button class="more" data-act="entry-edit" data-id="${l.id}" data-k="${k}">···</button></div>`);
+  $('content').innerHTML = `<div style="font-size:12.5px;color:var(--ink3);margin:-8px 0 12px"><button data-nav="lists" style="text-decoration:underline;color:var(--ink3)">Listes</button> › ${st.done}/${st.total}${l.note ? ' · ' + esc(l.note) : ''}</div>
+    <form class="addline" id="addEntry"><input id="entryInput" placeholder="Ajouter un élément… (Entrée)" autocomplete="off"><button type="submit">Ajouter</button></form>
+    ${entries.length ? `<div class="list" id="entryList">${rows.join('')}</div>` : '<div class="empty">Liste vide. Tape un élément ci-dessus.</div>'}`;
+  const f = $('addEntry'); f.addEventListener('submit', e => { e.preventDefault(); const v = $('entryInput').value.trim(); if (!v) return; save('items', l.id, { entries: [...(S.items[l.id].entries||[]), { t: v, done: false }] }, { silent: true }); $('entryInput').value = ''; render(); $('entryInput').focus(); });
+  const list = $('entryList'); if (list) { let dk = null;
+    list.addEventListener('dragstart', e => { const r = e.target.closest('[data-drag]'); if (!r) return; dk = +r.dataset.drag; r.classList.add('drag'); });
+    list.addEventListener('dragover', e => { e.preventDefault(); const r = e.target.closest('[data-drag]'); if (!r || +r.dataset.drag === dk) return; const rect = r.getBoundingClientRect(); const d = list.querySelector(`[data-drag="${dk}"]`); if (d) r.parentNode.insertBefore(d, e.clientY < rect.top + rect.height/2 ? r : r.nextSibling); });
+    list.addEventListener('drop', e => { e.preventDefault(); const cur = S.items[l.id].entries; const order = [...list.querySelectorAll('[data-drag]')].map(r => cur[+r.dataset.drag]); save('items', l.id, { entries: order }); });
+    list.addEventListener('dragend', () => list.querySelectorAll('.drag').forEach(x => x.classList.remove('drag')));
+  }
+}
+function setEntry(lid, k, patch){ const cur = (S.items[lid].entries||[]).map(x => ({...x})); cur[k] = { ...cur[k], ...patch }; save('items', lid, { entries: cur }); }
+function listForm(l){
+  const isNew = !l.id; const id = l.id || uid();
+  openForm(`<div class="detail-head"><h3>${isNew ? 'Nouvelle liste' : 'Liste'}</h3><button class="x" data-close>×</button></div>
+    <div class="field"><label>Nom</label><input id="f-title" value="${esc(l.title||'')}" placeholder="ex. Courses, Kit safari, Checklist tournage"></div>
+    <div class="field"><label>Description</label><input id="f-note" value="${esc(l.note||'')}" placeholder="optionnel"></div>
+    <div class="field"><label><input type="checkbox" id="f-reuse" ${l.reusable?'checked':''} style="width:auto;margin-right:6px">Liste réutilisable (valise, tournage…)</label></div>
+    <div class="btns"><div>${isNew?'':'<button class="btn danger" id="f-del">Supprimer</button>'}</div><div style="display:flex;gap:8px"><button class="btn" data-close>Fermer</button><button class="btn primary" id="f-ok">Enregistrer</button></div></div>`);
+  const H = formHost();
+  H.querySelector('#f-del')?.addEventListener('click', () => { if (confirm('Supprimer cette liste et son contenu ?')) { (S.items[id].entries||[]).forEach(x => deleteImage(x.img)); remove('items', id); closeForm(); go('lists'); } });
+  const ok = () => { const title = H.querySelector('#f-title').value.trim(); if (!title) return;
+    save('items', id, { kind: 'list', title, note: H.querySelector('#f-note').value.trim(), reusable: H.querySelector('#f-reuse').checked, entries: l.entries || [], createdAt: l.createdAt || now(), order: l.order ?? Date.now() }, { silent: true });
+    closeForm(); if (isNew) go('list', id); else render(); };
+  H.querySelector('#f-ok').onclick = ok; H.querySelector('#f-title').addEventListener('keydown', e => { if (e.key === 'Enter') ok(); });
+}
+function entryForm(lid, k){
+  const x = { ...(S.items[lid].entries[k]) }; let img = x.img || null; const subs = (x.subs||[]).map(s => ({...s}));
+  openForm(`<div class="detail-head"><h3>Élément</h3><button class="x" data-close>×</button></div>
+    <div class="field"><label>Intitulé</label><input id="f-t" value="${esc(x.t)}"></div>
+    <div class="field"><label>Lien</label><input id="f-url" value="${esc(x.url||'')}" placeholder="https://…"></div>
+    <div class="field"><label>Quantité / variante</label><input id="f-qty" value="${esc(x.qty||'')}" placeholder="ex. 2, taille M, 500 g"></div>
+    <div class="field"><label>Image</label><div id="imgZone"></div></div>
+    <div class="field"><label>Sous-éléments</label><div class="subedit" id="subEdit"></div><button type="button" class="pill" id="subAdd" style="align-self:flex-start;margin-top:4px">+ sous-élément</button></div>
+    <div class="field"><label>Note</label><textarea id="f-note">${esc(x.note||'')}</textarea></div>
+    <div class="btns"><div><button class="btn danger" id="f-del">Retirer</button></div><div style="display:flex;gap:8px"><button class="btn" data-close>Fermer</button><button class="btn primary" id="f-ok">Enregistrer</button></div></div>`);
+  const H = formHost();
+  const drawImg = async () => { const z = H.querySelector('#imgZone');
+    if (img) { z.innerHTML = `<div class="imgprev"><img alt=""><button type="button" id="imgRm" title="Retirer l'image">×</button></div>`; const u = await signedUrl(img); if (u) z.querySelector('img').src = u; z.querySelector('#imgRm').onclick = () => { img = null; drawImg(); }; }
+    else { z.innerHTML = `<div class="imgdrop" id="imgDrop">Glisse une image ici, colle-la (⌘V), ou clique<input type="file" accept="image/*"></div>`;
+      const d = z.querySelector('#imgDrop'); d.querySelector('input').onchange = async e => { const p = await uploadImage(e.target.files[0]); if (p) { img = p; drawImg(); } };
+      d.addEventListener('dragover', e => { e.preventDefault(); d.classList.add('over'); }); d.addEventListener('dragleave', () => d.classList.remove('over'));
+      d.addEventListener('drop', async e => { e.preventDefault(); d.classList.remove('over'); const f = e.dataTransfer.files[0]; if (f) { const p = await uploadImage(f); if (p) { img = p; drawImg(); } } }); } };
+  drawImg();
+  H.querySelectorAll('input,textarea').forEach(el => pasteImages(el, p => { img = p; drawImg(); }));
+  const drawSubs = () => { H.querySelector('#subEdit').innerHTML = subs.map((s,j) => `<div><input type="checkbox" ${s.done?'checked':''} data-k="${j}"><input type="text" value="${esc(s.t)}" data-k="${j}"><button type="button" class="rm" data-k="${j}">×</button></div>`).join(''); };
+  drawSubs();
+  H.querySelector('#subAdd').onclick = () => { subs.push({ t: '', done: false }); drawSubs(); [...H.querySelectorAll('#subEdit input[type=text]')].pop()?.focus(); };
+  H.querySelector('#subEdit').addEventListener('input', e => { if (e.target.type === 'text') subs[+e.target.dataset.k].t = e.target.value; });
+  H.querySelector('#subEdit').addEventListener('change', e => { if (e.target.type === 'checkbox') subs[+e.target.dataset.k].done = e.target.checked; });
+  H.querySelector('#subEdit').addEventListener('click', e => { const r = e.target.closest('.rm'); if (r) { subs.splice(+r.dataset.k, 1); drawSubs(); } });
+  H.querySelector('#subEdit').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.type === 'text') { e.preventDefault(); H.querySelector('#subAdd').click(); } });
+  H.querySelector('#f-del').onclick = () => { deleteImage(x.img); const cur = S.items[lid].entries.filter((_,j) => j !== k); save('items', lid, { entries: cur }); closeForm(); };
+  const ok = () => { const t = H.querySelector('#f-t').value.trim(); if (!t) return;
+    let url = H.querySelector('#f-url').value.trim(); if (url && !/^https?:\/\//.test(url)) url = 'https://' + url;
+    if (x.img && x.img !== img) deleteImage(x.img);
+    setEntry(lid, k, { t, url, qty: H.querySelector('#f-qty').value.trim(), note: H.querySelector('#f-note').value.trim(), img, subs: subs.filter(s => s.t.trim()) }); closeForm(); };
+  H.querySelector('#f-ok').onclick = ok; H.querySelector('#f-t').addEventListener('keydown', e => { if (e.key === 'Enter') ok(); });
+}
+document.body.addEventListener('change', e => {
+  const c = e.target.closest('[data-esub]'); if (!c) return;
+  const cur = S.items[c.dataset.esub].entries.map(x => ({...x, subs: (x.subs||[]).map(s => ({...s}))})); cur[+c.dataset.k].subs[+c.dataset.j].done = c.checked;
+  save('items', c.dataset.esub, { entries: cur });
+});
+
 /* ---------- search palette (⌘K) ---------- */
 const palBg = $('palBg'), palInput = $('palInput'), palRes = $('palRes'); let palIdx = 0, palItems = [];
 function openPal(){ palBg.classList.add('on'); palInput.value = ''; palSearch(''); palInput.focus(); }
@@ -843,7 +1016,8 @@ function palSearch(q){
   q = q.trim().toLowerCase(); const hit = s => !q || (s||'').toLowerCase().includes(q);
   palItems = [];
   Object.values(S.projects).forEach(p => { if (hit(p.name) || hit(p.why) || hit(p.notes)) palItems.push({ k: 'projet', t: p.name, go: () => go('project', p.id) }); });
-  Object.values(S.items).forEach(i => { if (hit(i.title) || hit(i.note)) palItems.push({ k: i.kind === 'idea' ? 'idée' : i.kind === 'inbox' ? 'boîte' : (i.done ? 'fait' : 'tâche'), t: i.title, sub: projName(i.projectId), go: () => { if (i.projectId) go('project', i.projectId); else go(i.kind==='inbox'?'inbox':'life'); setTimeout(() => openItem(S.items[i.id]), 50); } }); });
+  Object.values(S.items).forEach(i => { if (i.kind === 'list') return; if (hit(i.title) || hit(i.note)) palItems.push({ k: i.kind === 'idea' ? 'idée' : i.kind === 'inbox' ? 'boîte' : (i.done ? 'fait' : 'tâche'), t: i.title, sub: projName(i.projectId), go: () => { if (i.projectId) go('project', i.projectId); else go(i.kind==='inbox'?'inbox':'life'); setTimeout(() => openItem(S.items[i.id]), 50); } }); });
+  lists().forEach(l => { if (hit(l.title) || (l.entries||[]).some(e => hit(e.t))) palItems.push({ k: 'liste', t: l.title, go: () => go('list', l.id) }); });
   palItems = palItems.slice(0, 40); palIdx = 0; drawPal();
 }
 function drawPal(){ palRes.innerHTML = palItems.map((r,k) => `<button data-k="${k}" class="${k===palIdx?'on':''}"><span class="k">${r.k}</span><span>${esc(r.t)}</span>${r.sub?`<span style="color:var(--ink3);font-size:12px;margin-left:auto">${esc(r.sub)}</span>`:''}</button>`).join('') || '<div class="empty" style="padding:12px 16px">Rien trouvé.</div>'; }
@@ -862,7 +1036,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (palBg.classList.contains('on')) closePal(); else closeForm(); return; }
   if (typing) return;
   if (e.key === 'n' || e.key === 'N') { e.preventDefault(); if (view === 'project') openItem({ kind: 'task', projectId: curProject }); else $('capInput').focus(); }
-  const num = { '1':'today','2':'inbox','3':'projects','4':'life','5':'review' }[e.key]; if (num && !e.metaKey && !e.ctrlKey) go(num);
+  const num = { '1':'today','2':'inbox','3':'projects','4':'life','5':'lists','6':'review' }[e.key]; if (num && !e.metaKey && !e.ctrlKey) go(num);
 });
 </script>
 </body>
