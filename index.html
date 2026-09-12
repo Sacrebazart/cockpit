@@ -205,6 +205,20 @@ aside.detail{background:var(--surface);border-left:1px solid var(--line);positio
 .lightbox.on{display:flex} .lightbox img{max-width:94vw;max-height:94vh;border-radius:8px}
 .notes img[data-storage]:not([src]){min-height:60px;background:var(--surface2)}
 
+/* ideas */
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.score{display:inline-flex;gap:3px;align-items:center;font-size:11.5px;color:var(--ink3)}
+.score i{width:8px;height:8px;border-radius:50%;background:var(--surface2);display:inline-block}
+.score i.on{background:var(--ok)} .score.want i.on{background:var(--accent)}
+.scorepick{display:flex;gap:6px}
+.scorepick button{flex:1;padding:8px 6px;border:1px solid var(--line);border-radius:10px;font-size:13px;color:var(--ink2);background:var(--surface)}
+.scorepick button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tagin{display:flex;gap:6px;flex-wrap:wrap;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:6px 8px}
+.tagin .tag{cursor:pointer} .tagin .tag:hover{background:var(--danger);color:#fff}
+.tagin input{border:0;background:none;flex:1;min-width:100px;font-size:14px}
+.tagsuggest{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.tagsuggest button{font-size:11.5px;color:var(--ink3);border:1px dashed var(--line);border-radius:999px;padding:1px 8px}
+
 /* inbox triage */
 .triage{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:10px}
 .triage .t{font-size:17px;font-weight:600;font-family:"Sora",sans-serif}
@@ -314,7 +328,7 @@ nav.tabs{display:none}
     <div class="navlist plist" id="sideProjects"></div>
     <div class="foot">
       <div class="sync" id="sync">connexion…</div>
-      <div class="hint-kbd"><kbd>N</kbd> noter · <kbd>⌘K</kbd> chercher · <kbd>1</kbd>–<kbd>6</kbd> onglets</div>
+      <div class="hint-kbd"><kbd>N</kbd> noter · <kbd>⌘K</kbd> chercher · <kbd>1</kbd>–<kbd>7</kbd> onglets</div>
     </div>
   </aside>
 
@@ -511,11 +525,12 @@ const NAV = [
   ['today', "Aujourd'hui", '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>'],
   ['inbox', 'Boîte', '<svg viewBox="0 0 24 24"><path d="M3 13l2.5-8h13L21 13v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 13h5l1.5 3h5L16 13h5"/></svg>'],
   ['projects', 'Projets', '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>'],
+  ['ideas', 'Idées', '<svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.6 1 1.4 1 2.5h6c0-1.1.3-1.9 1-2.5A6 6 0 0 0 12 3z"/></svg>'],
   ['life', 'Vie', '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>'],
   ['lists', 'Listes', '<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>'],
   ['review', 'Revue', '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>'],
 ];
-const TITLES = { today:"Aujourd'hui", inbox:'Boîte de réception', projects:'Projets', life:'Vie quotidienne', review:'Revue de la semaine', project:'', lists:'Listes', list:'' };
+const TITLES = { today:"Aujourd'hui", inbox:'Boîte de réception', projects:'Projets', life:'Vie quotidienne', review:'Revue de la semaine', project:'', lists:'Listes', list:'', ideas:'Boîte à idées' };
 let curList = null;
 function go(v, pid){ view = v; if (v === 'list') curList = pid; else curProject = pid || null; selected = null; notesEditing = false; closeForm(); render(); window.scrollTo(0,0); }
 $('sideNav').innerHTML = NAV.map(([v,l,ic]) => `<button data-nav="${v}">${ic}${l}<span class="badge" data-badge="${v}" hidden></span></button>`).join('');
@@ -536,7 +551,7 @@ function render(){
   $('sideProjects').innerHTML = lane('now').map(p => `<button data-open-project="${p.id}" class="${view==='project'&&curProject===p.id?'on':''}"><span class="dot" style="background:var(--now)"></span>${esc(p.name)}</button>`).join('') || '<div class="empty" style="padding:4px 10px">aucun</div>';
   $('topActions').innerHTML = '';
   $('capture').style.display = (view === 'project' || view === 'list') ? 'none' : '';
-  ({ today: renderToday, inbox: renderInbox, projects: renderProjects, project: renderProject, life: renderLife, review: renderReview, lists: renderLists, list: renderList })[view]();
+  ({ today: renderToday, inbox: renderInbox, projects: renderProjects, project: renderProject, life: renderLife, review: renderReview, lists: renderLists, list: renderList, ideas: renderIdeas })[view]();
   hydrateImages();
 }
 
@@ -616,8 +631,8 @@ function renderProjects(){
   let h = `<div class="lane"><div class="lane-head"><span class="dot" style="background:var(--now)"></span><h2>Maintenant</h2><span class="hint ${nowP.length>3?'over':''}">${nowP.length}/3 ${nowP.length>3?'· trop, choisis':'· les seuls où tu bosses'}</span></div><div class="pgrid">${nowP.map(projCard).join('') || '<div class="empty">Rien en cours.</div>'}</div></div>`;
   h += `<div class="lane"><div class="lane-head"><span class="dot" style="background:var(--next)"></span><h2>Ensuite</h2><span class="hint">prêts, attendent une place</span></div><div class="pgrid">${nextP.map(projCard).join('') || '<div class="empty">Rien en attente.</div>'}</div></div>`;
   h += `<div class="lane"><div class="lane-head"><span class="dot" style="background:var(--parked)"></span><h2>Parqué</h2><span class="hint">gardé sans culpabilité</span></div><div class="pgrid">${parkedP.map(projCard).join('') || '<div class="empty">Rien de parqué.</div>'}</div></div>`;
-  h += `<div class="lane"><div class="lane-head"><span class="dot" style="background:var(--line)"></span><h2>Idées en vrac</h2><span class="hint">sans projet attaché</span></div>
-    ${looseIdeas.length ? `<div class="list">${looseIdeas.map(ideaRow).join('')}</div>` : '<div class="empty">Aucune.</div>'}</div>`;
+  h += `<div class="lane"><div class="lane-head"><span class="dot" style="background:var(--line)"></span><h2>Idées en vrac</h2><span class="hint"><button data-nav="ideas" style="text-decoration:underline;color:var(--ink3)">voir la boîte à idées</button></span></div>
+    ${looseIdeas.length ? `<div class="list">${looseIdeas.slice(0,5).map(ideaRowFull).join('')}</div>` : '<div class="empty">Aucune.</div>'}</div>`;
   $('content').innerHTML = h;
 }
 
@@ -650,7 +665,7 @@ function renderProject(){
   const linksHtml = `<div class="section"><div class="sec-head"><h2>Liens utiles</h2><span class="count"></span><span class="acts"><button class="pill" data-act="link-add" data-id="${p.id}">+ lien</button></span></div>
     ${(p.links||[]).length ? `<div class="links">${p.links.map((l,k) => `<a href="${esc(l.url)}" target="_blank" rel="noopener"><span>🔗</span><span>${esc(l.title||l.url)}</span><span class="u">${esc(l.url.replace(/^https?:\/\//,''))}</span><button class="rm" data-act="link-rm" data-id="${p.id}" data-k="${k}" title="Retirer">×</button></a>`).join('')}</div>` : '<div class="empty">Drive, dépôt, doc, site : les portes d\'entrée du projet.</div>'}</div>`;
   const ideasHtml = `<div class="section"><div class="sec-head"><h2>Idées pour ce projet</h2><span class="count">${pIdeas.length||''}</span><span class="acts"><button class="pill" data-act="add-idea-for" data-id="${p.id}">+ idée</button></span></div>
-    ${pIdeas.length ? `<div class="list">${pIdeas.map(ideaRow).join('')}</div>` : '<div class="empty">Aucune.</div>'}</div>`;
+    ${pIdeas.length ? `<div class="list">${pIdeas.map(ideaRowFull).join('')}</div>` : '<div class="empty">Aucune.</div>'}</div>`;
   const journal = (p.journal||[]).slice().reverse();
   const journalHtml = `<div class="section"><div class="sec-head"><h2>Journal</h2><span class="count">${journal.length||''}</span></div>
     ${journal.length ? `<div class="journal">${journal.map(j => `<div>${esc(j.text)}<small>${fmtDT(j.at)}</small></div>`).join('')}</div>` : '<div class="empty">Chaque « Fait ✓ » sur un prochain pas s\'archive ici. Le chemin parcouru.</div>'}</div>`;
@@ -742,6 +757,11 @@ document.body.addEventListener('click', e => {
     'notes-save': () => saveNotes(id),
     'link-add': () => linkForm(id),
     'new-list': () => listForm({}),
+    'new-idea': () => openItem({ kind: 'idea' }),
+    'idea-tag': () => { ideaTag = b.dataset.tag || null; render(); },
+    'promote': () => { const i = S.items[id]; const pid = uid();
+      save('projects', pid, { name: i.title, lane: 'next', why: '', notes: i.note || '', next: '', order: Date.now(), createdAt: now(), tags: i.tags||[] }, { silent: true });
+      remove('items', id); closeForm(); go('project', pid); toast('Idée promue en projet, dans « Ensuite ».'); },
     'edit-list': () => listForm(S.items[id]),
     'open-list': () => go('list', id),
     'list-reset': () => { save('items', id, { entries: (S.items[id].entries||[]).map(x => ({ ...x, done: false, subs: (x.subs||[]).map(s => ({...s, done:false})) })) }); toast('Liste remise à zéro.'); },
@@ -805,12 +825,27 @@ function openItem(i){
       <div class="quick-dates" style="margin-top:6px"><button type="button" class="pill" data-d="0">aujourd'hui</button><button type="button" class="pill" data-d="1">demain</button><button type="button" class="pill" data-d="7">dans 7 j</button><button type="button" class="pill" data-d="30">dans 30 j</button><button type="button" class="pill" data-d="">sans date</button></div></div>
     <div class="field"><label>Projet</label><select id="f-proj">${projectOptions(i.projectId)}</select></div>
     <div class="field" id="subField"><label>Sous-tâches</label><div class="subedit" id="subEdit"></div><button type="button" class="pill" id="subAdd" style="align-self:flex-start;margin-top:4px">+ sous-tâche</button></div>
-    <div class="field"><label>Note</label><textarea id="f-note" placeholder="Contexte, lien, détail…">${esc(i.note||'')}</textarea></div>
+    <div id="ideaFields" style="display:contents">
+      <div class="field"><label>Étiquettes</label><div class="tagin" id="tagIn"></div><div class="tagsuggest" id="tagSug"></div></div>
+      <div class="field"><label>Ça paie les vacances ?</label><div class="scorepick" id="paysPick"><button type="button" data-v="0">Non</button><button type="button" data-v="1">Un peu</button><button type="button" data-v="2">Oui</button></div></div>
+      <div class="field"><label>Ça me fait envie ?</label><div class="scorepick" id="wantPick"><button type="button" data-v="0">Bof</button><button type="button" data-v="1">Oui</button><button type="button" data-v="2">Très</button></div></div>
+    </div>
+    <div class="field"><label>Note${'\u00a0'}/ développement</label><textarea id="f-note" placeholder="Contexte, lien, détail… (colle une image : elle s'ajoute)">${esc(i.note||'')}</textarea></div>
     ${isNew ? '' : `<div style="font-size:12px;color:var(--ink3)">Créée le ${fmtDT(i.createdAt||now())}${i.doneAt?` · terminée le ${fmtDT(i.doneAt)}`:''}</div>`}
-    <div class="btns"><div>${isNew?'':'<button class="btn danger" id="f-del">Supprimer</button>'}</div><div style="display:flex;gap:8px"><button class="btn" data-close>Fermer</button><button class="btn primary" id="f-ok">Enregistrer</button></div></div>`);
-  let kind = i.kind || 'task';
+    <div class="btns"><div style="display:flex;gap:6px">${isNew?'':'<button class="btn danger" id="f-del">Supprimer</button>'}${(!isNew && i.kind==='idea')?`<button class="btn" data-act="promote" data-id="${id}" title="Devient un projet dans « Ensuite »">→ Projet</button>`:''}</div><div style="display:flex;gap:8px"><button class="btn" data-close>Fermer</button><button class="btn primary" id="f-ok">Enregistrer</button></div></div>`);
+  let kind = i.kind || 'task'; let pays = i.pays||0, want = i.want||0; const tags = [...(i.tags||[])];
   const H = formHost(), seg = H.querySelector('#kindSeg');
-  const syncKind = () => { seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.k === kind)); H.querySelector('#dueField').style.display = kind === 'task' ? '' : 'none'; H.querySelector('#subField').style.display = kind === 'task' ? '' : 'none'; };
+  const syncKind = () => { seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.k === kind)); H.querySelector('#dueField').style.display = kind === 'task' ? '' : 'none'; H.querySelector('#subField').style.display = kind === 'task' ? '' : 'none'; H.querySelector('#ideaFields').style.display = kind === 'idea' ? 'contents' : 'none'; };
+  const drawTags = () => { H.querySelector('#tagIn').innerHTML = tags.map((t,k)=>`<span class="tag" data-k="${k}" title="retirer">${esc(t)} ×</span>`).join('') + `<input id="tagNew" placeholder="${tags.length?'':'ex. rithe, photo, laser… puis Entrée'}">`;
+    H.querySelector('#tagSug').innerHTML = allTags().filter(t=>!tags.includes(t)).slice(0,8).map(t=>`<button type="button" data-t="${esc(t)}">${esc(t)}</button>`).join(''); };
+  const drawScore = () => { H.querySelectorAll('#paysPick button').forEach(b=>b.classList.toggle('on', +b.dataset.v===pays)); H.querySelectorAll('#wantPick button').forEach(b=>b.classList.toggle('on', +b.dataset.v===want)); };
+  drawTags(); drawScore();
+  H.querySelector('#tagIn').addEventListener('keydown', e => { if (e.target.id==='tagNew' && (e.key==='Enter'||e.key===',')) { e.preventDefault(); const v = e.target.value.trim().toLowerCase().replace(/,$/,''); if (v && !tags.includes(v)) tags.push(v); drawTags(); H.querySelector('#tagNew').focus(); } else if (e.target.id==='tagNew' && e.key==='Backspace' && !e.target.value && tags.length) { tags.pop(); drawTags(); H.querySelector('#tagNew').focus(); } });
+  H.querySelector('#tagIn').addEventListener('click', e => { const t = e.target.closest('.tag'); if (t) { tags.splice(+t.dataset.k,1); drawTags(); } else H.querySelector('#tagNew')?.focus(); });
+  H.querySelector('#tagSug').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { tags.push(b.dataset.t); drawTags(); } });
+  H.querySelector('#paysPick').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { pays = +b.dataset.v; drawScore(); } });
+  H.querySelector('#wantPick').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { want = +b.dataset.v; drawScore(); } });
+  pasteImages(H.querySelector('#f-note'), path => { const a = H.querySelector('#f-note'); a.value += `\n![](storage:${path})\n`; });
   const drawSubs = () => { H.querySelector('#subEdit').innerHTML = subs.map((s,k) => `<div><input type="checkbox" ${s.done?'checked':''} data-k="${k}"><input type="text" value="${esc(s.t)}" data-k="${k}" placeholder="sous-tâche"><button type="button" class="rm" data-k="${k}">×</button></div>`).join(''); };
   syncKind(); drawSubs();
   seg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { kind = b.dataset.k; syncKind(); } });
@@ -823,9 +858,11 @@ function openItem(i){
   H.querySelector('#f-del')?.addEventListener('click', () => { remove('items', id); closeForm(); });
   const ok = () => {
     const title = H.querySelector('#f-title').value.trim(); if (!title) return;
+    const pend = H.querySelector('#tagNew')?.value.trim().toLowerCase(); if (pend && !tags.includes(pend)) tags.push(pend);
     save('items', id, { kind, title, due: kind === 'task' ? (H.querySelector('#f-due').value || null) : null,
       projectId: H.querySelector('#f-proj').value || null, note: H.querySelector('#f-note').value.trim(),
-      subtasks: subs.filter(s => s.t.trim()), createdAt: i.createdAt || now(), done: i.done || false, order: i.order ?? Date.now() });
+      subtasks: subs.filter(s => s.t.trim()), createdAt: i.createdAt || now(), done: i.done || false, order: i.order ?? Date.now(),
+      tags: kind === 'idea' ? tags : [], pays: kind === 'idea' ? pays : 0, want: kind === 'idea' ? want : 0 });
     closeForm(); toast('Enregistré.');
   };
   H.querySelector('#f-ok').onclick = ok;
@@ -915,6 +952,32 @@ function pasteImages(el, onPath){
 }
 $('lightbox').addEventListener('click', () => $('lightbox').classList.remove('on'));
 document.body.addEventListener('click', e => { const im = e.target.closest('img.thumb,.notes img'); if (im && im.src) { $('lightbox').querySelector('img').src = im.src; $('lightbox').classList.add('on'); } });
+
+/* ---------- ideas ---------- */
+let ideaTag = null;
+const ideaScore = i => (i.pays||0) + (i.want||0);
+function allTags(){ const m = {}; ideas().forEach(i => (i.tags||[]).forEach(t => m[t] = (m[t]||0)+1)); return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(x=>x[0]); }
+function scoreDots(i){ return `<span class="score" title="paie les vacances">€ ${[1,2].map(n=>`<i class="${(i.pays||0)>=n?'on':''}"></i>`).join('')}</span><span class="score want" title="me fait envie">♥ ${[1,2].map(n=>`<i class="${(i.want||0)>=n?'on':''}"></i>`).join('')}</span>`; }
+function ideaRowFull(i){
+  return `<div class="row ${selected?.id===i.id?'sel':''}" data-row="${i.id}"><div class="body" data-act="select" data-id="${i.id}" style="cursor:pointer"><div class="t">${esc(i.title)}</div>
+    <div class="m">${scoreDots(i)}${(i.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}${i.projectId?`<span class="tag ${S.projects[i.projectId]?.lane||''}" data-open-project="${i.projectId}" style="cursor:pointer">${esc(projName(i.projectId))}</span>`:''}${i.note?`<span>${esc(i.note).split('\n')[0].slice(0,90)}</span>`:''}</div></div>
+    <button class="more" data-act="select" data-id="${i.id}">···</button></div>`;
+}
+function renderIdeas(){
+  const tags = allTags();
+  let list = ideas().filter(i => !ideaTag || (i.tags||[]).includes(ideaTag));
+  list.sort((a,b) => ideaScore(b) - ideaScore(a) || (b.createdAt||'').localeCompare(a.createdAt||''));
+  const hot = list.filter(i => ideaScore(i) >= 3), warm = list.filter(i => ideaScore(i) > 0 && ideaScore(i) < 3), cold = list.filter(i => !ideaScore(i));
+  $('topActions').innerHTML = `<button class="btn primary" data-act="new-idea">+ Idée</button>`;
+  let h = tags.length ? `<div class="chips"><button class="pill ${!ideaTag?'on':''}" data-act="idea-tag" data-tag="">Toutes</button>${tags.map(t=>`<button class="pill ${ideaTag===t?'on':''}" data-act="idea-tag" data-tag="${esc(t)}">${esc(t)}</button>`).join('')}</div>` : '';
+  if (!list.length) h += `<div class="empty">Aucune idée. Note-les dans la boîte, tri « Idée / projet », puis note-les ici sur deux questions : ça paie les vacances ? ça me fait envie ?</div>`;
+  else {
+    if (hot.length) h += section('Chaudes · paie ET envie', hot.map(ideaRowFull), '', hot.length);
+    if (warm.length) h += section('Tièdes', warm.map(ideaRowFull), '', warm.length);
+    if (cold.length) h += section('Pas encore notées', cold.map(ideaRowFull), '', cold.length);
+  }
+  $('content').innerHTML = h;
+}
 
 /* ---------- lists ---------- */
 function listStats(l){ const e = l.entries || []; return { total: e.length, done: e.filter(x => x.done).length }; }
@@ -1016,7 +1079,7 @@ function palSearch(q){
   q = q.trim().toLowerCase(); const hit = s => !q || (s||'').toLowerCase().includes(q);
   palItems = [];
   Object.values(S.projects).forEach(p => { if (hit(p.name) || hit(p.why) || hit(p.notes)) palItems.push({ k: 'projet', t: p.name, go: () => go('project', p.id) }); });
-  Object.values(S.items).forEach(i => { if (i.kind === 'list') return; if (hit(i.title) || hit(i.note)) palItems.push({ k: i.kind === 'idea' ? 'idée' : i.kind === 'inbox' ? 'boîte' : (i.done ? 'fait' : 'tâche'), t: i.title, sub: projName(i.projectId), go: () => { if (i.projectId) go('project', i.projectId); else go(i.kind==='inbox'?'inbox':'life'); setTimeout(() => openItem(S.items[i.id]), 50); } }); });
+  Object.values(S.items).forEach(i => { if (i.kind === 'list') return; if (hit(i.title) || hit(i.note)) palItems.push({ k: i.kind === 'idea' ? 'idée' : i.kind === 'inbox' ? 'boîte' : (i.done ? 'fait' : 'tâche'), t: i.title, sub: projName(i.projectId), go: () => { if (i.projectId) go('project', i.projectId); else go(i.kind==='inbox'?'inbox':i.kind==='idea'?'ideas':'life'); setTimeout(() => openItem(S.items[i.id]), 50); } }); });
   lists().forEach(l => { if (hit(l.title) || (l.entries||[]).some(e => hit(e.t))) palItems.push({ k: 'liste', t: l.title, go: () => go('list', l.id) }); });
   palItems = palItems.slice(0, 40); palIdx = 0; drawPal();
 }
@@ -1036,7 +1099,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (palBg.classList.contains('on')) closePal(); else closeForm(); return; }
   if (typing) return;
   if (e.key === 'n' || e.key === 'N') { e.preventDefault(); if (view === 'project') openItem({ kind: 'task', projectId: curProject }); else $('capInput').focus(); }
-  const num = { '1':'today','2':'inbox','3':'projects','4':'life','5':'lists','6':'review' }[e.key]; if (num && !e.metaKey && !e.ctrlKey) go(num);
+  const num = { '1':'today','2':'inbox','3':'projects','4':'ideas','5':'life','6':'lists','7':'review' }[e.key]; if (num && !e.metaKey && !e.ctrlKey) go(num);
 });
 </script>
 </body>
