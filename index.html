@@ -257,6 +257,23 @@ aside.detail{background:var(--surface);border-left:1px solid var(--line);positio
   .navlist button.on{background:var(--accent-soft);color:var(--now)}
 }
 
+/* contacts */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
+.ccard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 13px;display:flex;gap:10px;cursor:pointer;align-items:flex-start}
+.ccard:hover{border-color:var(--accent)}
+.ccard.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--surface2);color:var(--ink2);display:grid;place-items:center;font-family:"Sora",sans-serif;font-weight:600;font-size:13px;flex:none}
+.ccard .b{min-width:0;flex:1}
+.ccard .n{font-weight:600;overflow-wrap:anywhere}
+.ccard .r{font-size:12.5px;color:var(--ink3)}
+.ccard .m{display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:4px;font-size:12px}
+.ccard .m a{color:var(--next);text-decoration:none}
+.ccard .m .fu{color:var(--accent);font-weight:600} .ccard .m .fu.late{color:var(--danger)}
+.searchline{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.searchline input{flex:1;min-width:160px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px}
+.import{font-size:13px;color:var(--ink3);margin-top:16px;padding:12px 14px;border:1px dashed var(--line);border-radius:10px;position:relative}
+.import input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
 /* inbox triage */
 .triage{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:10px}
 .triage .t{font-size:17px;font-weight:600;font-family:"Sora",sans-serif}
@@ -367,7 +384,7 @@ nav.tabs{display:none}
     <div class="navlist plist" id="sideProjects"></div>
     <div class="foot">
       <div class="sync" id="sync">connexion…</div>
-      <div class="hint-kbd"><kbd>N</kbd> noter · <kbd>⌘K</kbd> chercher · <kbd>1</kbd>–<kbd>8</kbd> onglets</div>
+      <div class="hint-kbd"><kbd>N</kbd> noter · <kbd>⌘K</kbd> chercher · <kbd>1</kbd>–<kbd>9</kbd> onglets</div>
     </div>
   </aside>
 
@@ -524,6 +541,8 @@ const inboxItems = () => Object.values(S.items).filter(i => i.kind === 'inbox').
 const ideas = () => Object.values(S.items).filter(i => i.kind === 'idea');
 const lists = () => Object.values(S.items).filter(i => i.kind === 'list').sort(byOrder);
 const events = () => Object.values(S.items).filter(i => i.kind === 'event');
+const contacts = () => Object.values(S.items).filter(i => i.kind === 'contact').sort((a,b)=>(a.name||'').localeCompare(b.name||'', 'fr'));
+const initials = n => (n||'?').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
 function dayShift(iso, n){ const [y,m,d] = iso.split('-').map(Number); const dt = new Date(y, m-1, d + n); return isoDay(dt); }
 function weekStart(iso){ const [y,m,d] = iso.split('-').map(Number); const dt = new Date(y, m-1, d); const wd = (dt.getDay()+6)%7; return dayShift(iso, -wd); }
 function dayOfWeek(iso){ const [y,m,d] = iso.split('-').map(Number); return new Date(y,m-1,d).getDay(); }
@@ -572,9 +591,10 @@ const NAV = [
   ['ideas', 'Idées', '<svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.6 1 1.4 1 2.5h6c0-1.1.3-1.9 1-2.5A6 6 0 0 0 12 3z"/></svg>'],
   ['life', 'Vie', '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>'],
   ['lists', 'Listes', '<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>'],
+  ['contacts', 'Contacts', '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'],
   ['review', 'Revue', '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>'],
 ];
-const TITLES = { today:"Aujourd'hui", inbox:'Boîte de réception', projects:'Projets', life:'Vie quotidienne', review:'Revue de la semaine', project:'', lists:'Listes', list:'', ideas:'Boîte à idées', cal:'Agenda' };
+const TITLES = { today:"Aujourd'hui", inbox:'Boîte de réception', projects:'Projets', life:'Vie quotidienne', review:'Revue de la semaine', project:'', lists:'Listes', list:'', ideas:'Boîte à idées', cal:'Agenda', contacts:'Carnet d\'adresses' };
 let curList = null;
 function go(v, pid){ view = v; if (v === 'list') curList = pid; else curProject = pid || null; selected = null; notesEditing = false; closeForm(); render(); window.scrollTo(0,0); }
 $('sideNav').innerHTML = NAV.map(([v,l,ic]) => `<button data-nav="${v}">${ic}${l}<span class="badge" data-badge="${v}" hidden></span></button>`).join('');
@@ -597,8 +617,8 @@ function render(){
   const nb = inboxItems().length; document.querySelectorAll('[data-badge="inbox"]').forEach(b => { b.hidden = !nb; b.textContent = nb; });
   $('sideProjects').innerHTML = lane('now').map(p => `<button data-open-project="${p.id}" class="${view==='project'&&curProject===p.id?'on':''}"><span class="dot" style="background:var(--now)"></span>${esc(p.name)}</button>`).join('') || '<div class="empty" style="padding:4px 10px">aucun</div>';
   $('topActions').innerHTML = '';
-  $('capture').style.display = (view === 'project' || view === 'list' || view === 'cal') ? 'none' : '';
-  ({ today: renderToday, inbox: renderInbox, projects: renderProjects, project: renderProject, life: renderLife, review: renderReview, lists: renderLists, list: renderList, ideas: renderIdeas, cal: renderCal })[view]();
+  $('capture').style.display = (view === 'project' || view === 'list' || view === 'cal' || view === 'contacts') ? 'none' : '';
+  ({ today: renderToday, inbox: renderInbox, projects: renderProjects, project: renderProject, life: renderLife, review: renderReview, lists: renderLists, list: renderList, ideas: renderIdeas, cal: renderCal, contacts: renderContacts })[view]();
   hydrateImages();
 }
 
@@ -635,11 +655,14 @@ function renderToday(){
   const routines = Object.values(S.routines).filter(r => (r.days||[]).includes(new Date().getDay()));
   const nowP = lane('now');
   const soon = openTasks().filter(i => i.due && i.due > TODAY && i.due <= addDays(6)).sort((a,b)=>a.due.localeCompare(b.due));
-  let h = '';
+  const nbIn = inboxItems().length, nbLate = openTasks().filter(i => i.due && i.due < TODAY).length, nbWeek = openTasks().filter(i => i.due && i.due >= TODAY && i.due <= addDays(6)).length, nbHot = ideas().filter(i => ideaScore(i) >= 3).length;
+  let h = `<div class="stat" style="grid-template-columns:repeat(4,1fr)"><div data-nav="inbox" style="cursor:pointer"><b>${nbIn}</b><span>à trier</span></div><div style="cursor:pointer" data-nav="life"><b style="${nbLate?'color:var(--danger)':''}">${nbLate}</b><span>en retard</span></div><div data-nav="cal" style="cursor:pointer"><b>${nbWeek}</b><span>cette semaine</span></div><div data-nav="ideas" style="cursor:pointer"><b>${nbHot}</b><span>idée${nbHot>1?'s':''} chaude${nbHot>1?'s':''}</span></div></div>`;
   const evs = events().filter(e => e.date === TODAY).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
   if (evs.length) h += `<div class="section"><div class="sec-head"><h2>Agenda du jour</h2><span class="count"></span><span class="acts"><button class="pill" data-nav="cal">voir la semaine</button></span></div><div class="list">${evs.map(e => { const p = e.projectId ? S.projects[e.projectId] : null;
     return `<div class="row" style="border-left:3px solid ${e.block?'var(--now)':'var(--next)'}"><div class="body" data-act="event-edit" data-id="${e.id}" style="cursor:pointer"><div class="t">${e.time?`<span style="color:var(--ink3);font-variant-numeric:tabular-nums;margin-right:8px">${esc(e.time)}</span>`:''}${esc(e.title || (p?p.name:''))}</div><div class="m">${p?`<span class="tag ${p.lane}" data-open-project="${p.id}" style="cursor:pointer">${esc(p.name)}</span>`:''}${e.block&&p?`<span>${p.next?'Prochain pas : '+esc(p.next):'<span class="late">pas de prochain pas défini</span>'}</span>`:''}${e.note?`<span>${esc(e.note).slice(0,80)}</span>`:''}</div></div><button class="more" data-act="event-edit" data-id="${e.id}">···</button></div>`; }).join('')}</div></div>`;
   if (late.length) h += section('En retard', late.map(i=>taskRow(i)), '', late.length);
+  const fu = contacts().filter(c => c.followUp && c.followUp <= TODAY);
+  if (fu.length) h += `<div class="section"><div class="sec-head"><h2>À relancer</h2><span class="count">${fu.length}</span></div><div class="cgrid">${fu.map(contactCard).join('')}</div></div>`;
   h += section("À faire aujourd'hui", today.map(i=>taskRow(i)), "Rien de daté pour aujourd'hui.", today.length || '');
   if (routines.length) h += section('Routines du jour', routines.map(routineRow), '', '');
   h += `<div class="section"><div class="sec-head"><h2>Projets en cours</h2><span class="count">${nowP.length}/3</span></div>
@@ -719,7 +742,10 @@ function renderProject(){
   const journal = (p.journal||[]).slice().reverse();
   const journalHtml = `<div class="section"><div class="sec-head"><h2>Journal</h2><span class="count">${journal.length||''}</span></div>
     ${journal.length ? `<div class="journal">${journal.map(j => `<div>${esc(j.text)}<small>${fmtDT(j.at)}</small></div>`).join('')}</div>` : '<div class="empty">Chaque « Fait ✓ » sur un prochain pas s\'archive ici. Le chemin parcouru.</div>'}</div>`;
-  h += `<div class="pcols wide"><div>${stepsHtml}${notesHtml}</div><div>${linksHtml}${ideasHtml}${journalHtml}</div></div>`;
+  const pContacts = contacts().filter(c => (c.projectIds||[]).includes(p.id));
+  const contactsHtml = `<div class="section"><div class="sec-head"><h2>Contacts</h2><span class="count">${pContacts.length||''}</span><span class="acts"><button class="pill" data-act="add-contact-for" data-id="${p.id}">+ contact</button></span></div>
+    ${pContacts.length ? `<div class="list">${pContacts.map(contactCard).join('')}</div>` : '<div class="empty">Les gens du projet : client, testeur, fournisseur.</div>'}</div>`;
+  h += `<div class="pcols wide"><div>${stepsHtml}${notesHtml}</div><div>${linksHtml}${contactsHtml}${ideasHtml}${journalHtml}</div></div>`;
   $('content').innerHTML = h;
   if (notesEditing) { const a = $('notesArea'); a.focus(); a.addEventListener('keydown', e => { if ((e.metaKey||e.ctrlKey) && e.key === 'Enter') saveNotes(p.id); }); pasteImages(a, path => { const at = a.selectionStart; a.value = a.value.slice(0, at) + `\n![](storage:${path})\n` + a.value.slice(at); }); }
   setupDrag();
@@ -760,9 +786,12 @@ function renderReview(){
       <li><b>Les retards</b> ${late ? `· ${late} tâche(s) : reporter ou jeter, pas culpabiliser` : '· aucun ✓'}</li>
       <li><b>Maintenant = 3 max</b> ${nowP.length > 3 ? '· trop : rétrograder en « Ensuite »' : '· ok ✓'}</li>
       <li><b>Un prochain pas par projet en cours</b> ${noStep.length ? `· manque pour : ${noStep.map(p=>esc(p.name)).join(', ')}` : '· ok ✓'}</li>
+      <li><b>Relances</b> ${contacts().filter(c => c.followUp && c.followUp <= TODAY).length ? `· ${contacts().filter(c => c.followUp && c.followUp <= TODAY).length} contact(s) à relancer` : '· aucune ✓'}</li>
       <li><b>Regarder la semaine qui vient</b> · onglet Aujourd'hui, section « Cette semaine »</li>
     </ol>
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" data-act="review-done">Revue faite</button>${inbox?`<button class="btn" data-nav="inbox">Trier la boîte</button>`:''}</div></div>`;
+  h += `<div class="review-card"><h3>Sauvegarde</h3><p>Exporte tout Cockpit dans un fichier, ou importe un fichier (les éléments existants avec le même identifiant sont mis à jour, le reste est ajouté).</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="export-json">Exporter (JSON)</button><label class="btn" style="cursor:pointer">Importer un fichier<input type="file" accept=".json,application/json" id="jsonIn" style="display:none"></label></div></div>`;
   h += `<div class="review-card"><h3>Les règles du jeu</h3><ol>
     <li>Tout passe par la boîte. Zéro tri au moment de noter.</li>
     <li>Trois projets en cours, pas quatre. Les autres attendent, ils ne meurent pas.</li>
@@ -770,6 +799,11 @@ function renderReview(){
     <li>Le filtre : est-ce que ça paie les vacances, ou est-ce que ça compte vraiment ?</li>
     <li>On ne rattrape jamais. Une semaine ratée, on reprend, c'est tout.</li></ol></div>`;
   $('content').innerHTML = h;
+  $('jsonIn').addEventListener('change', async e => { const f = e.target.files[0]; if (!f) return;
+    try { const d = JSON.parse(await f.text()); let n = 0;
+      for (const col of ['projects','items','routines','meta']) for (const o of (Array.isArray(d[col]) ? d[col] : Object.values(d[col]||{}))) { if (!o || !o.id) continue; save(col, o.id, o, { silent: true }); n++; }
+      render(); toast(`${n} élément${n>1?'s':''} importé${n>1?'s':''}.`);
+    } catch (err) { toast('Fichier illisible.'); } });
 }
 
 /* ---------- actions ---------- */
@@ -786,7 +820,7 @@ document.body.addEventListener('click', e => {
   const A = {
     'toggle': () => { const i = S.items[id]; save('items', id, { done: !i.done, doneAt: !i.done ? now() : null }); },
     'routine-done': () => { const r = S.routines[id]; save('routines', id, { lastDone: r.lastDone === TODAY ? null : TODAY }); },
-    'select': () => openItem(S.items[id]),
+    'select': () => { const it = S.items[id]; if (it?.kind === 'contact') { selected = { id }; contactForm(it); } else openItem(it); },
     'edit-routine': () => routineForm(S.routines[id]),
     'edit-project': () => projectForm(S.projects[id]),
     'new-project': () => projectForm({ lane: 'next' }),
@@ -807,6 +841,10 @@ document.body.addEventListener('click', e => {
     'notes-save': () => saveNotes(id),
     'link-add': () => linkForm(id),
     'new-list': () => listForm({}),
+    'new-contact': () => contactForm({}),
+    'export-json': () => { const blob = new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `cockpit-${TODAY}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); },
+    'add-contact-for': () => contactForm({ projectIds: [id] }),
+    'contact-tag': () => { contactTag = b.dataset.tag || null; render(); },
     'more-menu': () => openForm(`<div class="detail-head"><h3>Plus</h3><button class="x" data-close>×</button></div><div class="navlist">${NAV.filter(([v]) => !MOBILE_MAIN.includes(v)).map(([v,l,ic]) => `<button data-nav="${v}" data-close>${ic}${l}</button>`).join('')}</div>`),
     'cal-prev': () => { calShift(-1); render(); }, 'cal-next': () => { calShift(1); render(); }, 'cal-today': () => { calAnchor = TODAY; render(); },
     'cal-mode': () => { calMode = b.dataset.mode; render(); },
@@ -1078,6 +1116,84 @@ function eventForm(ev){
   H.querySelector('#f-ok').onclick = ok; H.querySelector('#f-title').addEventListener('keydown', e => { if (e.key === 'Enter') ok(); });
 }
 
+/* ---------- contacts ---------- */
+let contactQ = '', contactTag = null;
+function contactCard(c){
+  const fu = c.followUp ? `<span class="fu ${c.followUp<TODAY?'late':''}">relancer ${c.followUp===TODAY?"aujourd'hui":fmtDate(c.followUp)}</span>` : '';
+  return `<div class="ccard ${selected?.id===c.id?'sel':''}" data-act="select" data-id="${c.id}" data-row="${c.id}"><div class="avatar">${esc(initials(c.name))}</div><div class="b"><div class="n">${esc(c.name)}</div>
+    ${(c.role||c.org)?`<div class="r">${esc([c.role,c.org].filter(Boolean).join(' · '))}</div>`:''}
+    <div class="m">${c.phone?`<a href="tel:${esc(c.phone.replace(/\s/g,''))}" data-ext>${esc(c.phone)}</a>`:''}${c.email?`<a href="mailto:${esc(c.email)}" data-ext>${esc(c.email)}</a>`:''}${(c.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}${fu}</div></div></div>`;
+}
+function renderContacts(){
+  const all = contacts(); const tags = {}; all.forEach(c => (c.tags||[]).forEach(t => tags[t] = 1));
+  const q = contactQ.toLowerCase();
+  const list = all.filter(c => (!contactTag || (c.tags||[]).includes(contactTag)) && (!q || [c.name,c.org,c.role,c.email,c.phone,c.note,(c.tags||[]).join(' ')].join(' ').toLowerCase().includes(q)));
+  const due = all.filter(c => c.followUp && c.followUp <= TODAY);
+  $('topActions').innerHTML = `<button class="btn primary" data-act="new-contact">+ Contact</button>`;
+  let h = `<div class="searchline"><input id="cq" placeholder="Chercher un nom, une société, une étiquette…" value="${esc(contactQ)}"><span style="font-size:12.5px;color:var(--ink3)">${all.length} contact${all.length>1?'s':''}</span></div>`;
+  if (Object.keys(tags).length) h += `<div class="chips"><button class="pill ${!contactTag?'on':''}" data-act="contact-tag" data-tag="">Tous</button>${Object.keys(tags).sort().map(t=>`<button class="pill ${contactTag===t?'on':''}" data-act="contact-tag" data-tag="${esc(t)}">${esc(t)}</button>`).join('')}</div>`;
+  if (due.length && !q && !contactTag) h += section('À relancer', due.map(contactCard), '', due.length);
+  h += list.length ? `<div class="cgrid">${list.map(contactCard).join('')}</div>` : `<div class="empty">${all.length ? 'Aucun contact ne correspond.' : 'Carnet vide. Ajoute un contact, ou importe un export Google Contacts (fichier CSV) ci-dessous.'}</div>`;
+  h += `<div class="import">Importer un fichier CSV (Google Contacts → Exporter → CSV Google). Les doublons sur l'email ou le téléphone sont ignorés.<input type="file" accept=".csv,text/csv" id="csvIn"></div>`;
+  $('content').innerHTML = h;
+  const cq = $('cq'); cq.addEventListener('input', () => { contactQ = cq.value; const pos = cq.selectionStart; render(); const n = $('cq'); n.focus(); n.setSelectionRange(pos, pos); });
+  $('csvIn').addEventListener('change', e => importCSV(e.target.files[0]));
+}
+function parseCSV(text){
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) { const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i+1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; }
+    else if (ch === '"') q = true; else if (ch === ',') { row.push(cell); cell = ''; } else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i+1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; } else cell += ch; }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim()));
+}
+async function importCSV(file){
+  if (!file) return; const rows = parseCSV(await file.text()); if (rows.length < 2) { toast('Fichier vide.'); return; }
+  const H = rows[0].map(h => h.toLowerCase()); const col = (...names) => H.findIndex(h => names.some(n => h === n || h.startsWith(n)));
+  const iFirst = col('first name','prénom','given name'), iLast = col('last name','nom','family name'), iName = col('name','nom complet'), iOrg = col('organization name','organization 1 - name','société','company'), iRole = col('organization title','organization 1 - title','fonction','job title'), iMail = col('e-mail 1 - value','email','e-mail'), iPhone = col('phone 1 - value','phone','téléphone','mobile'), iLabels = col('labels','group membership'), iNotes = col('notes');
+  const existing = contacts(); const seen = new Set(existing.flatMap(c => [c.email, c.phone].filter(Boolean).map(x => x.toLowerCase().replace(/\s/g,''))));
+  let added = 0;
+  for (const r of rows.slice(1)) {
+    const g = i => i >= 0 ? (r[i]||'').trim() : '';
+    const name = [g(iFirst), g(iLast)].filter(Boolean).join(' ') || g(iName); if (!name) continue;
+    const email = g(iMail).split(':::')[0].trim(), phone = g(iPhone).split(':::')[0].trim();
+    const keys = [email, phone].filter(Boolean).map(x => x.toLowerCase().replace(/\s/g,'')); if (keys.some(k => seen.has(k))) continue; keys.forEach(k => seen.add(k));
+    const tags = g(iLabels).split(/:::|;|,/).map(t => t.replace(/\* ?/,'').trim().toLowerCase()).filter(t => t && !['mycontacts','my contacts','starred','contacts'].includes(t.replace(/\s/g,'')));
+    save('items', uid(), { kind: 'contact', name, org: g(iOrg), role: g(iRole), email, phone, tags, note: g(iNotes), createdAt: now() }, { silent: true }); added++;
+  }
+  render(); toast(added ? `${added} contact${added>1?'s':''} importé${added>1?'s':''}.` : 'Rien de nouveau à importer.');
+}
+function contactForm(c){
+  const isNew = !c.id; const id = c.id || uid(); const tags = [...(c.tags||[])]; const pids = new Set(c.projectIds||[]);
+  const allP = [...lane('now'), ...lane('next'), ...lane('parked')];
+  openForm(`<div class="detail-head"><h3>${isNew ? 'Nouveau contact' : 'Contact'}</h3><button class="x" data-close>×</button></div>
+    <div class="field"><label>Nom</label><input id="f-name" value="${esc(c.name||'')}"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="field"><label>Rôle</label><input id="f-role" value="${esc(c.role||'')}" placeholder="ex. client, testeur"></div><div class="field"><label>Société</label><input id="f-org" value="${esc(c.org||'')}"></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="field"><label>Téléphone</label><input id="f-phone" type="tel" value="${esc(c.phone||'')}"></div><div class="field"><label>Email</label><input id="f-email" type="email" value="${esc(c.email||'')}"></div></div>
+    <div class="field"><label>Étiquettes</label><div class="tagin" id="tagIn"></div><div class="tagsuggest" id="tagSug"></div></div>
+    <div class="field"><label>Projets liés</label><div class="seg" id="projPick">${allP.map(p => `<button type="button" data-p="${p.id}" class="${pids.has(p.id)?'on':''}">${esc(p.name)}</button>`).join('') || '<span class="empty" style="padding:0">aucun projet</span>'}</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="field"><label>Dernier contact</label><input id="f-last" type="date" value="${c.lastContact||''}"></div><div class="field"><label>À relancer le</label><input id="f-fu" type="date" value="${c.followUp||''}"></div></div>
+    <div class="quick-dates"><button type="button" class="pill" data-act="c-today">contacté aujourd'hui</button><button type="button" class="pill" data-d="7">relancer dans 7 j</button><button type="button" class="pill" data-d="30">dans 30 j</button><button type="button" class="pill" data-d="90">dans 3 mois</button></div>
+    <div class="field"><label>Notes</label><textarea id="f-note" placeholder="Comment on s'est connus, ce qu'il aime, ce qu'on s'est dit…">${esc(c.note||'')}</textarea></div>
+    <div class="btns"><div>${isNew?'':'<button class="btn danger" id="f-del">Supprimer</button>'}</div><div style="display:flex;gap:8px"><button class="btn" data-close>Fermer</button><button class="btn primary" id="f-ok">Enregistrer</button></div></div>`);
+  const H = formHost();
+  const cTags = () => { const m = {}; contacts().forEach(x => (x.tags||[]).forEach(t => m[t]=1)); return Object.keys(m).sort(); };
+  const drawTags = () => { H.querySelector('#tagIn').innerHTML = tags.map((t,k)=>`<span class="tag" data-k="${k}">${esc(t)} ×</span>`).join('') + `<input id="tagNew" placeholder="${tags.length?'':'ex. client photo, testeur rithe, pompiers…'}">`;
+    H.querySelector('#tagSug').innerHTML = cTags().filter(t=>!tags.includes(t)).slice(0,10).map(t=>`<button type="button" data-t="${esc(t)}">${esc(t)}</button>`).join(''); };
+  drawTags();
+  H.querySelector('#tagIn').addEventListener('keydown', e => { if (e.target.id==='tagNew' && (e.key==='Enter'||e.key===',')) { e.preventDefault(); const v = e.target.value.trim().toLowerCase().replace(/,$/,''); if (v && !tags.includes(v)) tags.push(v); drawTags(); H.querySelector('#tagNew').focus(); } });
+  H.querySelector('#tagIn').addEventListener('click', e => { const t = e.target.closest('.tag'); if (t) { tags.splice(+t.dataset.k,1); drawTags(); } else H.querySelector('#tagNew')?.focus(); });
+  H.querySelector('#tagSug').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { tags.push(b.dataset.t); drawTags(); } });
+  H.querySelector('#projPick').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; pids.has(b.dataset.p) ? pids.delete(b.dataset.p) : pids.add(b.dataset.p); b.classList.toggle('on', pids.has(b.dataset.p)); });
+  H.querySelector('.quick-dates').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; e.stopPropagation(); if (b.dataset.act === 'c-today') H.querySelector('#f-last').value = TODAY; else H.querySelector('#f-fu').value = addDays(+b.dataset.d); });
+  H.querySelector('#f-del')?.addEventListener('click', () => { if (confirm('Supprimer ce contact ?')) { remove('items', id); closeForm(); } });
+  const ok = () => { const name = H.querySelector('#f-name').value.trim(); if (!name) return;
+    const pend = H.querySelector('#tagNew')?.value.trim().toLowerCase(); if (pend && !tags.includes(pend)) tags.push(pend);
+    save('items', id, { kind: 'contact', name, role: H.querySelector('#f-role').value.trim(), org: H.querySelector('#f-org').value.trim(), phone: H.querySelector('#f-phone').value.trim(), email: H.querySelector('#f-email').value.trim(), tags, projectIds: [...pids], lastContact: H.querySelector('#f-last').value || null, followUp: H.querySelector('#f-fu').value || null, note: H.querySelector('#f-note').value.trim(), createdAt: c.createdAt || now() });
+    closeForm(); toast('Enregistré.'); };
+  H.querySelector('#f-ok').onclick = ok; H.querySelector('#f-name').addEventListener('keydown', e => { if (e.key === 'Enter') ok(); });
+}
+
 /* ---------- ideas ---------- */
 let ideaTag = null;
 const ideaScore = i => (i.pays||0) + (i.want||0);
@@ -1205,7 +1321,8 @@ function palSearch(q){
   palItems = [];
   Object.values(S.projects).forEach(p => { if (hit(p.name) || hit(p.why) || hit(p.notes)) palItems.push({ k: 'projet', t: p.name, go: () => go('project', p.id) }); });
   events().forEach(e => { if (hit(e.title) || hit(e.note)) palItems.push({ k: 'agenda', t: (e.title || projName(e.projectId)) + ' · ' + fmtDate(e.date), go: () => { calAnchor = e.date; calMode = 'week'; go('cal'); } }); });
-  Object.values(S.items).forEach(i => { if (i.kind === 'list' || i.kind === 'event') return; if (hit(i.title) || hit(i.note)) palItems.push({ k: i.kind === 'idea' ? 'idée' : i.kind === 'inbox' ? 'boîte' : (i.done ? 'fait' : 'tâche'), t: i.title, sub: projName(i.projectId), go: () => { if (i.projectId) go('project', i.projectId); else go(i.kind==='inbox'?'inbox':i.kind==='idea'?'ideas':'life'); setTimeout(() => openItem(S.items[i.id]), 50); } }); });
+  Object.values(S.items).forEach(i => { if (i.kind === 'list' || i.kind === 'event' || i.kind === 'contact') return; if (hit(i.title) || hit(i.note)) palItems.push({ k: i.kind === 'idea' ? 'idée' : i.kind === 'inbox' ? 'boîte' : (i.done ? 'fait' : 'tâche'), t: i.title, sub: projName(i.projectId), go: () => { if (i.projectId) go('project', i.projectId); else go(i.kind==='inbox'?'inbox':i.kind==='idea'?'ideas':'life'); setTimeout(() => openItem(S.items[i.id]), 50); } }); });
+  contacts().forEach(c => { if (hit(c.name) || hit(c.org) || hit(c.email) || hit(c.note) || (c.tags||[]).some(hit)) palItems.push({ k: 'contact', t: c.name, sub: c.org || c.role || '', go: () => { go('contacts'); setTimeout(() => contactForm(S.items[c.id]), 50); } }); });
   lists().forEach(l => { if (hit(l.title) || (l.entries||[]).some(e => hit(e.t))) palItems.push({ k: 'liste', t: l.title, go: () => go('list', l.id) }); });
   palItems = palItems.slice(0, 40); palIdx = 0; drawPal();
 }
@@ -1225,7 +1342,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (palBg.classList.contains('on')) closePal(); else closeForm(); return; }
   if (typing) return;
   if (e.key === 'n' || e.key === 'N') { e.preventDefault(); if (view === 'project') openItem({ kind: 'task', projectId: curProject }); else $('capInput').focus(); }
-  const num = { '1':'today','2':'inbox','3':'projects','4':'cal','5':'ideas','6':'life','7':'lists','8':'review' }[e.key]; if (num && !e.metaKey && !e.ctrlKey) go(num);
+  const num = { '1':'today','2':'inbox','3':'projects','4':'cal','5':'ideas','6':'life','7':'lists','8':'contacts','9':'review' }[e.key]; if (num && !e.metaKey && !e.ctrlKey) go(num);
 });
 </script>
 </body>
